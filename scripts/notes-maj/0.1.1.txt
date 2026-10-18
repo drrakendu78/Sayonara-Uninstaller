@@ -1,0 +1,7 @@
+Nettoyeur devient Sayonara Uninstaller.
+
+- Désinstaller des programmes : un par un, avec leur propre désinstalleur, puis ce qu'ils laissent derrière eux (dossiers, réglages du registre sauvegardés avant, raccourcis morts), d'après la logique de Bulk Crap Uninstaller.
+- Faire de la place sur C: : fichiers temporaires, Corbeille, restes des mises à jour Windows, caches des navigateurs (on reste connecté) et des jeux, vieux installateurs et gros fichiers oubliés des Téléchargements, restes de programmes déjà désinstallés. Ce qui est « à vérifier » n'est jamais coché d'office et part à la Corbeille.
+- Mises à jour vérifiées par leur signature, proposées par une pastille dans la barre de titre.
+
+Vous aviez installé Nettoyeur 0.1.0 ? La mise à jour installe Sayonara Uninstaller à côté : Nettoyeur peut ensuite être désinstallé.

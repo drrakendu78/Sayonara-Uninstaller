@@ -1,6 +1,6 @@
 [package]
 name = "sayonara-uninstaller"
-version = "0.1.0"
+version = "0.1.1"
 description = "Sayonara Uninstaller — désinstalle les programmes avec leurs restes et fait de la place sur le disque C:, sans jamais toucher aux photos, documents ni jeux"
 authors = ["Djamel Lazreg (drrakendu78)"]
 edition = "2021"
