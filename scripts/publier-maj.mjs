@@ -161,14 +161,14 @@ try {
   fs.rmSync(tmp, { recursive: true, force: true });
 }
 
-// ── Relecture par HTTPS, comme l'appli la fera (GitHub peut mettre quelques secondes) ──
+// ── Relecture par HTTPS, comme l'appli la fera (GitHub met parfois plus de 2 min à suivre « latest » : 0.1.1) ──
 let served = null;
-for (let i = 0; i < 24 && !served; i++) {
+for (let i = 0; i < 60 && !served; i++) {
   const s = await fetch(endpoint, { cache: 'no-store' }).then((x) => (x.ok ? x.json() : null)).catch(() => null);
   if (s && s.version === version) served = s;
   else await attendre(5000);
 }
-if (!served) die(`latest.json servi n'annonce pas ${version} au bout de 2 min`);
+if (!served) die(`latest.json servi n'annonce pas ${version} au bout de 5 min (la publication, elle, est en ligne)`);
 const p = (served.platforms || {})[PLATFORM] || {};
 if (p.signature !== sig || p.url !== url) die('latest.json servi différent de celui envoyé');
 const dl = await fetch(p.url, { cache: 'no-store' });
