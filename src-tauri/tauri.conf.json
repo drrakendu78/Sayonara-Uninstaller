@@ -27,8 +27,21 @@
       "csp": "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src ipc: http://ipc.localhost"
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVEMDYyQjI1NTY3RkNEMEUKUldRT3pYOVdKU3NHN1oxcnpmMnNRQklaRWRQeXhZTEFCaFF1amFmVXdoRkduNkd1VjUvRlRYWDgK",
+      "endpoints": [
+        "https://github.com/drrakendu78/Nettoyeur/releases/latest/download/latest.json"
+      ],
+      "requireSignedVersion": true,
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": ["nsis"],
     "publisher": "Drrakendu78",
     "icon": [

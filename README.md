@@ -52,11 +52,33 @@ Le lien « Désinstaller des programmes », sous le bouton de l'accueil :
   déposé dans `%LOCALAPPDATA%\com.drrakendu78.nettoyeur\plan-admin.json` ; le programme relancé
   ne le lit que si son empreinte SHA-256 est celle reçue en argument, puis revérifie chaque élément.
 
+## Mises à jour
+
+Au lancement, puis toutes les 30 minutes, l'appli lit `latest.json` sur les publications GitHub du dépôt
+(`https://github.com/drrakendu78/Nettoyeur/releases/latest/download/latest.json`). Si une version plus récente
+existe, une pastille « Mise à jour X » apparaît dans la barre de titre : un clic demande confirmation
+(« Installer et relancer ? »), le second télécharge l'installeur, vérifie sa signature avec la clé publique de
+`tauri.conf.json` (liée à la version annoncée : `requireSignedVersion`), puis l'installe avec sa barre de
+progression et relance le Nettoyeur. Jamais pendant une analyse, un nettoyage ou une désinstallation ; rien en
+mode développement. Hors ligne, rien ne s'affiche.
+
+## Publier une version
+
+1. Monter la version dans `src-tauri/Cargo.toml` **et** `src-tauri/tauri.conf.json`.
+2. Écrire les notes dans `scripts/notes-maj/<version>.txt`, commiter et pousser.
+3. `node scripts/publier-maj.mjs --build --notes-file scripts/notes-maj/<version>.txt` (`--essai` d'abord :
+   tout est vérifié, rien n'est publié).
+
+Le script refuse un dépôt non poussé, une signature qui ne correspond pas à la clé de l'appli ou à la version,
+un retour en arrière ; il publie en brouillon, ajoute `latest.json` en dernier, met en ligne, puis relit le tout
+par HTTPS. La clé privée est dans `~/.tauri/nettoyeur.key`, jamais dans le dépôt : **la sauvegarder**, la perdre
+rendrait impossible toute mise à jour des Nettoyeur déjà installés.
+
 ## Développer
 
 ```
 cd src-tauri
-cargo test                                            # 39 tests, dont jonctions, clés, raccourcis et plan échangé
+cargo test                                            # 43 tests, dont jonctions, clés, raccourcis, plan échangé et mises à jour
 cargo test -- --ignored --nocapture analyse_reelle    # l'analyse sur la vraie machine, en lecture seule
 NETTOYEUR_PROGRAMME=Blender cargo test -- --ignored --nocapture restes_reels   # ses restes, en lecture seule
 cargo tauri dev --no-dev-server
@@ -64,7 +86,10 @@ cargo tauri dev --no-dev-server
 
 `tao` vient de `src-tauri/patches/tao` (cf. `patches/README.md`).
 
-## Licences
+## Licence
+
+Code source visible, sous licence **PolyForm Strict 1.0.0** (`LICENSE`) : lecture, audit et usage non
+commercial ; ni redistribution, ni fork, ni œuvre dérivée. Ce n'est pas un logiciel open source.
 
 La détection des restes (`noms.rs`, `restes.rs`) est portée de Bulk Crap Uninstaller
 (© 2017 Marcin Szeniak, Apache 2.0) : notice, modifications et licence dans

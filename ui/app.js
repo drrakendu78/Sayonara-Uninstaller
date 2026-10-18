@@ -538,5 +538,90 @@
   }
   $('#fini-programmes').addEventListener('click', () => { afficher('accueil'); disque(); });
 
+  /* ── Mise à jour (maj.rs), reprise d'Atreia Hub : cherchée 2 s après le lancement, toutes les
+     30 min, et au retour sur l'appli si la dernière recherche a plus de 5 min. Une pastille dans
+     la barre de titre ; l'appli se ferme pour s'installer, donc on le demande une fois, sur la
+     pastille même, et jamais pendant une opération. ── */
+  const pastille = $('#maj');
+  const MAJ = { etat: 'rien', version: '', erreur: '', recu: 0, total: 0, phase: '', a: 0, confirmer: null, attente: false };
+  let recherche = false;
+  // une analyse, un nettoyage, une désinstallation ou une suppression en cours : on ne ferme pas l'appli dessous
+  const occupee = () => !$('#desinstallation').hidden || !!document.querySelector('.principal[aria-busy="true"]');
+
+  function peindreMaj() {
+    const montre = MAJ.etat === 'dispo' || MAJ.etat === 'installe';
+    pastille.hidden = !montre;
+    if (!montre) return;
+    const fleche = dessin(14, ['M12 19 V5', 'M6 11 L12 5 L18 11'], '#FFFFFF', 2.4);
+    if (MAJ.etat === 'installe') {
+      pastille.disabled = true;
+      pastille.setAttribute('aria-busy', 'true');
+      const p = MAJ.total ? Math.min(100, Math.floor((MAJ.recu / MAJ.total) * 100)) : null;
+      pastille.replaceChildren(fleche, MAJ.phase === 'installation' ? 'Installation…' : 'Téléchargement');
+      if (MAJ.phase !== 'installation' && p !== null) pastille.append(' ', element('span', 'pourcent', p + ' %'));
+      pastille.title = 'Nettoyeur ' + MAJ.version + ' : il se ferme, s’installe puis se relance';
+      return;
+    }
+    pastille.disabled = false;
+    pastille.removeAttribute('aria-busy');
+    pastille.replaceChildren(fleche, MAJ.attente ? 'Après l’opération en cours'
+      : MAJ.confirmer ? 'Installer et relancer ?'
+      : MAJ.erreur ? 'Réessayer la mise à jour'
+      : 'Mise à jour ' + MAJ.version);
+    pastille.title = MAJ.erreur || 'Nettoyeur ' + MAJ.version + ' est disponible : il se ferme, s’installe puis se relance';
+  }
+
+  async function chercherMaj() {
+    if (recherche || MAJ.etat === 'installe') return;
+    recherche = true;
+    try {
+      const r = (await invoke('maj_verifier')) || {};
+      if (r.disponible) Object.assign(MAJ, { etat: 'dispo', version: String(r.version || '') });
+      else Object.assign(MAJ, { etat: 'rien', version: '', erreur: '' });
+    } catch (e) {
+      // hors ligne ou GitHub en panne : rien ne s'affiche, et une mise à jour déjà trouvée reste
+    } finally {
+      MAJ.a = Date.now();
+      recherche = false;
+    }
+    peindreMaj();
+  }
+
+  pastille.addEventListener('click', async () => {
+    if (MAJ.etat !== 'dispo') return;
+    if (occupee()) {
+      MAJ.attente = true;
+      peindreMaj();
+      setTimeout(() => { MAJ.attente = false; peindreMaj(); }, 2500);
+      return;
+    }
+    if (!MAJ.confirmer) {
+      MAJ.confirmer = setTimeout(() => { MAJ.confirmer = null; peindreMaj(); }, 4000);
+      peindreMaj();
+      return;
+    }
+    clearTimeout(MAJ.confirmer);
+    Object.assign(MAJ, { etat: 'installe', confirmer: null, recu: 0, total: 0, phase: '', erreur: '' });
+    peindreMaj();
+    try {
+      await invoke('maj_installer');
+      // réussie, l'installation ferme l'appli avant de revenir ici
+    } catch (e) {
+      Object.assign(MAJ, { etat: 'dispo', erreur: message(e) });
+      peindreMaj();
+    }
+  });
+  T.event.listen('maj-progression', (e) => {
+    const p = e.payload || {};
+    if (MAJ.etat !== 'installe') return;
+    if (p.phase === 'installation') MAJ.phase = 'installation';
+    else { MAJ.recu = +p.recu || 0; MAJ.total = +p.total || 0; }
+    peindreMaj();
+  });
+  setTimeout(() => { chercherMaj(); setInterval(chercherMaj, 30 * 60000); }, 2000);
+  const auRetour = () => { if (document.visibilityState === 'visible' && MAJ.a && Date.now() - MAJ.a > 5 * 60000) chercherMaj(); };
+  document.addEventListener('visibilitychange', auRetour);
+  window.addEventListener('focus', auRetour);
+
   disque();
 })();

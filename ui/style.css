@@ -60,6 +60,20 @@ h1, p { margin: 0; }
   .fenetre button:hover { background: rgba(0, 0, 0, 0.06); }
   .fenetre .fermer:hover { background: #E81123; color: #FFFFFF; }
 }
+.droite { display: flex; align-items: center; gap: 10px; }
+
+/* la mise à jour trouvée : une pastille pleine dans la barre de titre, le texte blanc */
+.maj {
+  display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 12px; border: 0; border-radius: 999px;
+  background: var(--accent); color: #FFFFFF; font-size: 12.5px; font-weight: 600; white-space: nowrap; cursor: pointer;
+  animation: arrivee 180ms var(--sortie);
+  transition: filter 150ms ease, transform 120ms var(--sortie), opacity 150ms ease;
+}
+.maj:active:not(:disabled) { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) { .maj:hover:not(:disabled) { filter: brightness(1.08); } }
+.maj:disabled { cursor: default; opacity: 0.55; }
+.maj[aria-busy="true"] { opacity: 1; cursor: progress; }
+.maj .pourcent { font-variant-numeric: tabular-nums; }
 
 /* ── écrans ── */
 .ecran { flex: 1; min-height: 0; animation: arrivee 180ms var(--sortie); }
@@ -213,6 +227,7 @@ h1, p { margin: 0; }
   .roue { animation: none; border-top-color: rgba(255, 255, 255, 0.35); border-right-color: #FFFFFF; }
   .mini-roue { animation: none; }
   .barre-prog > div { transition: none; }
-  .principal { transition: none; }
-  .principal:active:not(:disabled) { transform: none; }
+  .principal, .maj { transition: none; }
+  .principal:active:not(:disabled), .maj:active:not(:disabled) { transform: none; }
+  .maj { animation: none; }
 }

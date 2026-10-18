@@ -9,6 +9,7 @@ mod admin;
 mod categories;
 mod desinstallation;
 mod icones;
+mod maj;
 mod nettoyage;
 mod noms;
 mod programmes;
@@ -510,6 +511,8 @@ async fn supprimer_restes(indexes: Vec<usize>, etat: State<'_, Etat>) -> Result<
 pub fn run() {
     tauri::Builder::default()
         .manage(Etat::default())
+        // mises à jour (maj.rs) : pilotées par nos commandes, l'interface n'a pas accès à celles du module
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             infos_disque,
             analyser,
@@ -521,7 +524,9 @@ pub fn run() {
             passer,
             chercher_restes,
             montrer_reste,
-            supprimer_restes
+            supprimer_restes,
+            maj::maj_verifier,
+            maj::maj_installer
         ])
         .run(tauri::generate_context!())
         .expect("Nettoyeur n'a pas pu démarrer");
