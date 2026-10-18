@@ -1,0 +1,160 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: © 2026 Djamel Lazreg (drrakendu78) <https://djamellazreg.fr>
+     SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
+     Nettoyeur — les trois écrans de la maquette (Accueil, Résultats, Terminé). Aucun style en
+     ligne (CSP) : tout est dans style.css, les valeurs viennent de app.js. -->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nettoyeur</title>
+<link rel="stylesheet" href="style.css">
+<script src="app.js" defer></script>
+</head>
+<body>
+<div class="app">
+  <header class="barre" id="barre">
+    <div class="marque">
+      <span class="logo" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 L10 14"/><path d="M9 9 L15 15"/><path d="M14 4 L20 10 L12 18 L6 12 Z"/></svg></span>
+      Nettoyeur
+    </div>
+    <div class="fenetre">
+      <button type="button" id="reduire" aria-label="Réduire"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6 H10" stroke="currentColor" stroke-width="1.2"/></svg></button>
+      <button type="button" id="agrandir" aria-label="Agrandir"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="2" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
+      <button type="button" id="fermer" class="fermer" aria-label="Fermer"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5" stroke="currentColor" stroke-width="1.2"/></svg></button>
+    </div>
+  </header>
+
+  <!-- 1 · ACCUEIL -->
+  <main class="ecran centre" id="accueil">
+    <div class="colonne accueil">
+      <div class="anneau">
+        <svg width="236" height="236" viewBox="0 0 236 236" role="img" id="anneau" aria-label="Disque C :">
+          <circle cx="118" cy="118" r="100" fill="none" stroke="#E5E5EA" stroke-width="18"/>
+          <circle id="arc" cx="118" cy="118" r="100" fill="none" stroke="#0071E3" stroke-width="18" stroke-linecap="round" stroke-dasharray="0 629" transform="rotate(-90 118 118)"/>
+        </svg>
+        <div class="anneau-texte">
+          <div class="disque">Disque C:</div>
+          <div class="utilise" id="utilise">—</div>
+          <div class="sur" id="sur">&nbsp;</div>
+        </div>
+      </div>
+      <div class="titres">
+        <h1 tabindex="-1">Votre PC garde des fichiers dont il n’a plus besoin.</h1>
+        <p>Nettoyeur les retrouve en quelques secondes, sans jamais toucher à vos photos, vos documents ni vos jeux.</p>
+      </div>
+      <button type="button" class="principal grand" id="analyser">
+        <svg class="icone" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 L21 21"/></svg>
+        <span class="roue" aria-hidden="true"></span>
+        <span class="libelle">Analyser mon PC</span>
+      </button>
+      <div class="note" id="note-accueil" role="status">Rien n’est supprimé sans votre accord.</div>
+    </div>
+  </main>
+
+  <!-- 2 · RÉSULTATS -->
+  <main class="ecran resultats" id="resultats" hidden>
+    <div class="entete">
+      <div class="titres">
+        <h1 tabindex="-1" id="titre-resultats">On a trouvé <span id="total-titre">0 Ko</span> à récupérer</h1>
+        <p id="sous-titre">Les éléments « à vérifier » ne sont jamais cochés d’office.</p>
+      </div>
+      <button type="button" class="lien" id="retour">Retour</button>
+    </div>
+    <ul class="carte liste" id="liste">
+      <li class="ligne" data-id="temp">
+        <label class="rang" for="c-temp">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#515154" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5 V12 L15 14"/></svg>
+          <span class="nom"><span class="titre">Fichiers temporaires</span><span class="desc">Laissés par Windows et les applications</span></span>
+          <span class="pastille sure">Sans risque</span>
+          <span class="taille">—</span>
+          <input id="c-temp" type="checkbox" aria-label="Nettoyer les fichiers temporaires">
+        </label>
+      </li>
+      <li class="ligne" data-id="corbeille">
+        <label class="rang" for="c-corbeille">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#515154" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7 H20"/><path d="M9 7 V4.5 H15 V7"/><path d="M6 7 L7 20 H17 L18 7"/></svg>
+          <span class="nom"><span class="titre">Corbeille</span><span class="desc">Fichiers que vous avez déjà supprimés</span></span>
+          <span class="pastille sure">Sans risque</span>
+          <span class="taille">—</span>
+          <input id="c-corbeille" type="checkbox" aria-label="Vider la Corbeille">
+        </label>
+      </li>
+      <li class="ligne" data-id="maj">
+        <label class="rang" for="c-maj">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#515154" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12 A8 8 0 0 1 6 17.3"/><path d="M4 12 A8 8 0 0 1 18 6.7"/><path d="M18 3 V7 H14"/><path d="M6 21 V17 H10"/></svg>
+          <span class="nom"><span class="titre">Restes des mises à jour Windows</span><span class="desc">Déjà installées, plus jamais relues</span></span>
+          <span class="pastille sure">Sans risque</span>
+          <span class="taille">—</span>
+          <input id="c-maj" type="checkbox" aria-label="Nettoyer les restes des mises à jour">
+        </label>
+      </li>
+      <li class="ligne" data-id="nav">
+        <label class="rang" for="c-nav">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#515154" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12 H20.5"/><path d="M12 3.5 C9 7 9 17 12 20.5 C15 17 15 7 12 3.5"/></svg>
+          <span class="nom"><span class="titre">Cache des navigateurs</span><span class="desc">Chrome, Edge, Brave, Firefox — vous restez connecté</span></span>
+          <span class="pastille sure">Sans risque</span>
+          <span class="taille">—</span>
+          <input id="c-nav" type="checkbox" aria-label="Nettoyer le cache des navigateurs">
+        </label>
+      </li>
+      <li class="ligne" data-id="jeux">
+        <label class="rang" for="c-jeux">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#515154" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 8 H17 A4 4 0 0 1 21 12 V14 A3 3 0 0 1 15.6 15.8 L14.5 14.5 H9.5 L8.4 15.8 A3 3 0 0 1 3 14 V12 A4 4 0 0 1 7 8 Z"/><path d="M8 10.5 V13.5 M6.5 12 H9.5"/></svg>
+          <span class="nom"><span class="titre">Cache des jeux</span><span class="desc">Shaders de la carte graphique, refaits au prochain lancement</span></span>
+          <span class="pastille sure">Sans risque</span>
+          <span class="taille">—</span>
+          <input id="c-jeux" type="checkbox" aria-label="Nettoyer le cache des jeux">
+        </label>
+      </li>
+      <li class="ligne" data-id="install">
+        <label class="rang" for="c-install">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#515154" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4 V15"/><path d="M7.5 10.5 L12 15 L16.5 10.5"/><path d="M4.5 19.5 H19.5"/></svg>
+          <span class="nom"><span class="titre">Vieux installateurs</span><span class="desc">Dans Téléchargements, ouverts il y a plus de 3 mois</span></span>
+          <span class="pastille verifier">À vérifier</span>
+          <span class="taille">—</span>
+          <input id="c-install" type="checkbox" aria-label="Nettoyer les vieux installateurs">
+        </label>
+        <div class="detail" hidden></div>
+      </li>
+      <li class="ligne" data-id="gros">
+        <label class="rang" for="c-gros">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#515154" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5 H14 L19 8.5 V20.5 H6 Z"/><path d="M14 3.5 V8.5 H19"/></svg>
+          <span class="nom"><span class="titre">Gros fichiers oubliés</span><span class="desc">Plus de 1 Go, pas ouverts depuis un an — la liste s’ouvre avant</span></span>
+          <span class="pastille verifier">À vérifier</span>
+          <span class="taille">—</span>
+          <input id="c-gros" type="checkbox" aria-label="Nettoyer les gros fichiers oubliés">
+        </label>
+        <div class="detail" hidden></div>
+      </li>
+    </ul>
+  </main>
+  <footer class="pied" id="pied" hidden>
+    <div class="selection" id="selection" role="status">Sélection : <b id="total-pied">0 Ko</b></div>
+    <button type="button" class="principal" id="nettoyer">
+      <span class="roue" aria-hidden="true"></span>
+      <span class="libelle">Nettoyer <span id="total-bouton">0 Ko</span></span>
+    </button>
+  </footer>
+
+  <!-- 3 · TERMINÉ -->
+  <main class="ecran centre" id="termine" hidden>
+    <div class="colonne termine">
+      <div class="coche-ronde"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#1B6E37" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Nettoyage terminé"><path d="M5 12.5 L10 17.5 L19 7"/></svg></div>
+      <div class="gain">
+        <h1 class="chiffre" tabindex="-1" id="libere">0 Ko</h1>
+        <div class="legende">libérés sur votre PC</div>
+      </div>
+      <div class="carte bilan">
+        <div class="bilan-ligne"><span>Espace libre avant</span><b id="avant">—</b></div>
+        <div class="jauge" aria-hidden="true"><div class="jauge-avant" id="jauge-avant"></div><div class="jauge-gain" id="jauge-gain"></div></div>
+        <div class="bilan-ligne"><span>Espace libre maintenant</span><b id="apres">—</b></div>
+      </div>
+      <button type="button" class="principal" id="fini">Terminé</button>
+      <div class="note" id="note-corbeille">Les fichiers « à vérifier » restent dans la Corbeille tant que vous ne la videz pas.</div>
+      <div class="note alerte" id="note-admin" hidden>Les restes des mises à jour n’ont pas été nettoyés : l’autorisation a été refusée.</div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

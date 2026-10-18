@@ -1,0 +1,173 @@
+/* SPDX-FileCopyrightText: © 2026 Djamel Lazreg (drrakendu78) <https://djamellazreg.fr>
+   SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
+
+   Nettoyeur — la maquette (claude.ai/artifact/TJa7mqybpLY1iUbJiNohjh) portée telle quelle :
+   fond #F5F5F7, cartes blanches de rayon 16, bleu #0071E3, une action par écran. Figtree si
+   elle est installée, sinon la police de Windows, très proche. */
+
+:root {
+  --accent: #0071E3;
+  --fond: #F5F5F7;
+  --texte: #1D1D1F;
+  --texte-2: #515154;
+  --filet: #E3E3E8;
+  --filet-carte: #EBEBF0;
+  --piste: #E5E5EA;
+  --sur-fond: #E3F3E8;
+  --sur-texte: #1B6E37;
+  --verif-fond: #FFF1DC;
+  --verif-texte: #8A4B00;
+  --verre: rgba(255, 255, 255, 0.72);
+  --ombre-carte: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --sortie: cubic-bezier(0.23, 1, 0.32, 1);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--fond);
+  color: var(--texte);
+  font-family: 'Figtree', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  /* la hauteur « normale » de Figtree (1,2) : mêmes mesures que la maquette avec la police de Windows */
+  line-height: 1.2;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+}
+button { font: inherit; color: inherit; }
+h1, p { margin: 0; }
+[hidden] { display: none !important; }
+
+.app { height: 100%; display: flex; flex-direction: column; }
+
+/* ── barre de titre (44 px + son filet) ──
+   La maquette donne largeurs et hauteurs SANS marges ni bordures (boîte « content-box ») ; ici tout
+   est en border-box : les valeurs ci-dessous les incluent (barre 45, pied 77, boutons + 2 × marge). */
+.barre {
+  height: 45px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 8px 0 18px; border-bottom: 1px solid var(--filet); background: var(--verre);
+}
+.marque { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; pointer-events: none; }
+.logo { width: 22px; height: 22px; border-radius: 7px; background: var(--accent); display: flex; align-items: center; justify-content: center; }
+.fenetre { display: flex; gap: 2px; }
+.fenetre button {
+  width: 44px; height: 32px; border: 0; background: transparent; border-radius: 6px; color: #3A3A3C;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .fenetre button:hover { background: rgba(0, 0, 0, 0.06); }
+  .fenetre .fermer:hover { background: #E81123; color: #FFFFFF; }
+}
+
+/* ── écrans ── */
+.ecran { flex: 1; min-height: 0; animation: arrivee 180ms var(--sortie); }
+.ecran.centre { display: flex; align-items: center; justify-content: center; padding: 32px; overflow: auto; }
+.colonne { display: flex; flex-direction: column; align-items: center; text-align: center; }
+@keyframes arrivee { from { opacity: 0; } to { opacity: 1; } }
+
+/* boutons pleins : le bleu, le texte blanc */
+.principal {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  border: 0; background: var(--accent); color: #FFFFFF; font-weight: 600; cursor: pointer;
+  transition: filter 150ms ease, transform 120ms var(--sortie), opacity 150ms ease;
+}
+.principal:active:not(:disabled) { transform: scale(0.98); }
+@media (hover: hover) and (pointer: fine) { .principal:hover:not(:disabled) { filter: brightness(1.08); } }
+.principal:disabled { cursor: default; opacity: 0.45; box-shadow: none !important; }
+.principal[aria-busy="true"] { opacity: 1; cursor: progress; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.lien:focus-visible, .afficher:focus-visible { border-radius: 6px; }
+
+/* la roue d'attente, à la place de l'icône pendant l'analyse ou le nettoyage */
+.roue { display: none; width: 18px; height: 18px; border-radius: 50%; border: 2.4px solid rgba(255, 255, 255, 0.35); border-top-color: #FFFFFF; animation: tourne 800ms linear infinite; }
+[aria-busy="true"] .roue { display: block; }
+[aria-busy="true"] .icone { display: none; }
+@keyframes tourne { to { transform: rotate(360deg); } }
+
+.note { font-size: 14px; color: var(--texte-2); }
+.note.alerte, .selection.alerte { color: var(--verif-texte); }
+
+/* ── 1 · Accueil ── */
+.accueil { width: 560px; max-width: 100%; gap: 28px; }
+.anneau { position: relative; width: 236px; height: 236px; }
+#arc { transition: stroke-dasharray 700ms var(--sortie); }
+.anneau-texte { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.disque { font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--texte-2); }
+.utilise { font-size: 44px; font-weight: 700; letter-spacing: -0.02em; }
+.sur { font-size: 15px; color: var(--texte-2); }
+.accueil .titres { display: flex; flex-direction: column; gap: 10px; }
+.accueil h1 { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; outline: none; }
+.accueil p { font-size: 17px; line-height: 1.5; color: var(--texte-2); }
+.grand { min-width: 320px; height: 54px; padding: 0 30px; border-radius: 14px; font-size: 18px; box-shadow: 0 6px 18px rgba(0, 113, 227, 0.28); }
+
+/* ── 2 · Résultats ── */
+.resultats { display: flex; flex-direction: column; gap: 16px; padding: 22px 40px 0; }
+.entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-shrink: 0; }
+.entete .titres { display: flex; flex-direction: column; gap: 6px; }
+.entete h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; outline: none; }
+.entete p { font-size: 15px; color: var(--texte-2); }
+.lien { border: 0; background: none; padding: 10px 4px; font-size: 15px; font-weight: 500; color: #0066CC; cursor: pointer; }
+@media (hover: hover) and (pointer: fine) { .lien:hover { color: #004C99; } }
+.lien:disabled { opacity: 0.45; cursor: default; }
+
+.carte { background: #FFFFFF; border-radius: 16px; box-shadow: var(--ombre-carte); }
+/* la carte défile si la fenêtre est basse ou si une liste « à vérifier » est ouverte */
+.liste { list-style: none; margin: 0 0 16px; padding: 0; overflow: auto; min-height: 0; flex: 0 1 auto; }
+.ligne + .ligne { border-top: 1px solid var(--filet-carte); }
+.rang {
+  display: grid; grid-template-columns: 40px minmax(0, 1fr) 110px 90px 28px; align-items: center; gap: 16px;
+  height: 60px; padding: 0 22px; cursor: pointer;
+}
+.rang.vide { cursor: default; }
+.nom { display: flex; flex-direction: column; min-width: 0; }
+.nom .titre { font-size: 16px; font-weight: 600; }
+.nom .desc { font-size: 13px; color: var(--texte-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pastille { justify-self: start; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.pastille.sure { background: var(--sur-fond); color: var(--sur-texte); }
+.pastille.verifier { background: var(--verif-fond); color: var(--verif-texte); }
+.taille { text-align: right; font-size: 16px; font-weight: 600; white-space: nowrap; }
+.rang.vide .taille { color: var(--texte-2); font-weight: 500; }
+.rang input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); cursor: inherit; }
+
+/* la liste d'une catégorie « à vérifier », ouverte sur place quand on la coche */
+.detail { padding: 0 22px 14px 78px; display: flex; flex-direction: column; gap: 2px; }
+.fichier { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center; gap: 14px; min-height: 34px; font-size: 14px; }
+.fichier .nom-fichier { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: text; }
+.fichier .meta { font-size: 13px; color: var(--texte-2); white-space: nowrap; }
+.afficher { border: 0; background: none; padding: 4px 2px; font-size: 13px; font-weight: 600; color: #0066CC; cursor: pointer; }
+@media (hover: hover) and (pointer: fine) { .afficher:hover { color: #004C99; } }
+.detail .plus, .detail .vide-liste { font-size: 13px; color: var(--texte-2); padding: 4px 0 0; }
+
+.pied {
+  flex-shrink: 0; height: 77px; display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  padding: 0 40px; border-top: 1px solid var(--filet); background: var(--verre);
+}
+.selection { font-size: 15px; color: var(--texte-2); }
+.selection b { font-weight: 700; color: var(--texte); }
+#nettoyer { min-width: 272px; height: 48px; padding: 0 26px; border-radius: 13px; font-size: 17px; box-shadow: 0 6px 18px rgba(0, 113, 227, 0.25); }
+
+/* ── 3 · Terminé ── */
+.termine { width: 600px; max-width: 100%; gap: 26px; }
+.coche-ronde { width: 132px; height: 132px; border-radius: 999px; background: var(--sur-fond); display: flex; align-items: center; justify-content: center; }
+.gain { display: flex; flex-direction: column; gap: 8px; }
+.chiffre { font-size: 64px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; outline: none; }
+.legende { font-size: 22px; font-weight: 600; }
+.bilan { width: 100%; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; }
+.bilan-ligne { display: flex; justify-content: space-between; font-size: 15px; }
+.bilan-ligne span { color: var(--texte-2); }
+.bilan-ligne b { font-weight: 600; }
+.jauge { height: 10px; border-radius: 999px; background: var(--piste); overflow: hidden; display: flex; }
+.jauge-avant { background: #C7C7CC; width: 0; }
+.jauge-gain { background: var(--accent); width: 0; }
+#fini { min-width: 232px; height: 50px; padding: 0 26px; border-radius: 13px; font-size: 17px; }
+
+/* moins de mouvement : ni fondu, ni anneau qui se remplit, ni roue qui tourne */
+@media (prefers-reduced-motion: reduce) {
+  .ecran { animation: none; }
+  #arc { transition: none; }
+  .roue { animation: none; border-top-color: rgba(255, 255, 255, 0.35); border-right-color: #FFFFFF; }
+  .principal { transition: none; }
+  .principal:active:not(:disabled) { transform: none; }
+}

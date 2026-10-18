@@ -1,0 +1,44 @@
+[package]
+name = "nettoyeur"
+version = "0.1.0"
+description = "Nettoyeur — fait de la place sur le disque C:, sans jamais toucher aux photos, documents ni jeux"
+authors = ["Djamel Lazreg (drrakendu78)"]
+edition = "2021"
+license = "LicenseRef-PolyForm-Strict-1.0.0"
+
+[lib]
+name = "nettoyeur_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+walkdir = "2"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = [
+  "Win32_Foundation",
+  "Win32_Storage_FileSystem",
+  "Win32_System_Com",
+  "Win32_System_Registry",
+  "Win32_System_Threading",
+  "Win32_UI_Shell",
+  "Win32_UI_WindowsAndMessaging",
+] }
+
+[profile.release]
+opt-level = 2
+codegen-units = 256
+strip = true
+
+# ── tao patché, comme Stelliverse et Stelliverse Release ──────────────────────
+# Tauri clone son contexte (runner de la boucle d'événements de tao, derrière un `Rc` NON
+# atomique) depuis n'importe quel thread : compteur corrompu → crash 0xc000001d / 0xc0000374.
+# L'analyse tourne dans un fil de fond et émet ses étapes : même risque. Copie de
+# Stelliverse-release/src-tauri/patches/tao (tauri-apps/tauri#15408) — cf. patches/README.md.
+[patch.crates-io]
+tao = { path = "patches/tao" }
