@@ -1,7 +1,8 @@
 # Nettoyeur
 
 Petite appli grand public (Tauri 2) qui fait de la place sur le disque **C:**, sans jamais toucher
-aux photos, aux documents ni aux jeux. Maquette : claude.ai/artifact/TJa7mqybpLY1iUbJiNohjh.
+aux photos, aux documents ni aux jeux, et qui désinstalle les programmes avec ce qu'ils laissent
+derrière eux. Maquette : claude.ai/artifact/TJa7mqybpLY1iUbJiNohjh.
 
 ## Ce qu'elle nettoie
 
@@ -14,25 +15,57 @@ aux photos, aux documents ni aux jeux. Maquette : claude.ai/artifact/TJa7mqybpLY
 | Cache des jeux | shaders NVIDIA, AMD, Intel, DirectX, Star Citizen | coché |
 | Vieux installateurs | Téléchargements, .exe/.msi/.msix non utilisés depuis 3 mois | **à vérifier** |
 | Gros fichiers oubliés | Téléchargements, > 1 Go, non utilisés depuis un an | **à vérifier** |
+| Restes de programmes désinstallés | dossiers sans programme installé : Program Files (64 et 32 bits), `Programs` de AppData et ProgramData | **à vérifier** |
+
+## Désinstaller des programmes
+
+Le lien « Désinstaller des programmes », sous le bouton de l'accueil :
+
+1. **Vos programmes** — la liste de Windows (clés « Uninstall » de HKLM 64 et 32 bits et de HKCU),
+   avec icône, éditeur, date et taille. Les composants système (runtimes, pilotes, SDK, Edge,
+   WebView2…) sont masqués.
+2. **Désinstallation** — un programme à la fois, avec SON désinstalleur. On attend qu'il ait
+   vraiment fini : ses processus enfants, puis la disparition de sa clé « Uninstall ». « Passer »
+   apparaît au bout de 8 s ; après 30 min, on n'attend plus.
+3. **Les restes** — la logique de Bulk Crap Uninstaller (points de confiance) : dossiers (AppData,
+   LocalLow, ProgramData, Program Files), clés `Software\<éditeur>`, raccourcis morts du menu
+   Démarrer et du Bureau. « Sans risque » est coché, « à vérifier » jamais ; « Tout garder » ne
+   supprime rien.
+4. **Bilan** — dossiers et raccourcis à la Corbeille ; chaque clé est exportée en .reg dans
+   `Documents\Nettoyeur\Sauvegardes\<date>` AVANT d'être supprimée (un double-clic la remet).
 
 ## Garde-fous
 
-- L'interface n'envoie que des **identifiants de catégorie** : aucun chemin ne vient du front.
-- On ne supprime que dans des dossiers dont le **nom final** est un nom de cache connu
+- L'interface n'envoie que des **identifiants** (catégories) et des **numéros** dans les listes
+  gardées côté Rust : aucun chemin ne vient du front.
+- On ne vide que des dossiers dont le **nom final** est un nom de cache connu
   (`categories::racine_sure`), sur le disque système, jamais derrière un lien ou une jonction.
 - Un fichier créé ou modifié dans les **24 dernières heures** reste.
 - Les « à vérifier » partent à la **Corbeille** (vidée AVANT, pour qu'ils y restent récupérables) ;
   si l'un est trop gros pour elle, Windows demande avant de le supprimer.
-- Windows\Temp et les mises à jour : **une** demande d'autorisation (UAC), seulement s'il y a
-  quelque chose à gagner ; le programme relancé ne reçoit que des identifiants.
+- Restes : jamais un dossier qui contient l'installation d'un programme encore là, rien sous
+  Windows, aucun dossier « Windows… » ou « Microsoft… », aucune clé `Microsoft`, `Windows`,
+  `Classes`, `Clients` ou `Policies` ; Documents, Bureau (hors raccourcis) et Téléchargements ne
+  sont jamais fouillés.
+- Ce qui demande l'administrateur (Windows\Temp, mises à jour, Program Files, ProgramData, HKLM) :
+  **une** demande d'autorisation (UAC), seulement s'il y a quelque chose à faire. Le plan est
+  déposé dans `%LOCALAPPDATA%\com.drrakendu78.nettoyeur\plan-admin.json` ; le programme relancé
+  ne le lit que si son empreinte SHA-256 est celle reçue en argument, puis revérifie chaque élément.
 
 ## Développer
 
 ```
 cd src-tauri
-cargo test                                            # 9 tests, dont jonctions et fichiers récents
+cargo test                                            # 39 tests, dont jonctions, clés, raccourcis et plan échangé
 cargo test -- --ignored --nocapture analyse_reelle    # l'analyse sur la vraie machine, en lecture seule
+NETTOYEUR_PROGRAMME=Blender cargo test -- --ignored --nocapture restes_reels   # ses restes, en lecture seule
 cargo tauri dev --no-dev-server
 ```
 
 `tao` vient de `src-tauri/patches/tao` (cf. `patches/README.md`).
+
+## Licences
+
+La détection des restes (`noms.rs`, `restes.rs`) est portée de Bulk Crap Uninstaller
+(© 2017 Marcin Szeniak, Apache 2.0) : notice, modifications et licence dans
+`LICENCES-TIERS/BCU.txt`.

@@ -14,9 +14,11 @@
 
   const NOMS = {
     temp: 'Fichiers temporaires', corbeille: 'Corbeille', maj: 'Restes des mises à jour Windows',
-    nav: 'Cache des navigateurs', jeux: 'Cache des jeux', install: 'Téléchargements', gros: 'Téléchargements'
+    nav: 'Cache des navigateurs', jeux: 'Cache des jeux', install: 'Téléchargements', gros: 'Téléchargements',
+    orphelins: 'Restes de programmes'
   };
-  const A_VERIFIER = ['install', 'gros'];
+  const A_VERIFIER = ['install', 'gros', 'orphelins'];
+  const NS = 'http://www.w3.org/2000/svg';
 
   /* ── nombres : des Go comme l'Explorateur (1 Go = 1024³ octets), à la française ── */
   const GO = 1024 ** 3, MO = 1024 ** 2, KO = 1024;
@@ -52,11 +54,35 @@
   $('#fermer').addEventListener('click', () => fenetre.close());
 
   /* ── écrans ── */
+  const ECRANS = ['accueil', 'resultats', 'termine', 'programmes', 'desinstallation', 'restes', 'termine-programmes'];
+  const PIEDS = { resultats: '#pied', programmes: '#pied-programmes', restes: '#pied-restes' };
   function afficher(nom) {
-    for (const id of ['accueil', 'resultats', 'termine']) $('#' + id).hidden = id !== nom;
-    $('#pied').hidden = nom !== 'resultats';
+    for (const id of ECRANS) $('#' + id).hidden = id !== nom;
+    for (const [ecran, pied] of Object.entries(PIEDS)) $(pied).hidden = ecran !== nom;
     const titre = $('#' + nom + ' h1');
     if (titre) titre.focus({ preventScroll: true });
+  }
+  // un petit dessin SVG, sans balisage dans une chaîne (CSP, textContent partout)
+  function dessin(largeur, chemins, couleur, epaisseur) {
+    const s = document.createElementNS(NS, 'svg');
+    s.setAttribute('width', largeur); s.setAttribute('height', largeur); s.setAttribute('viewBox', '0 0 24 24');
+    s.setAttribute('fill', 'none'); s.setAttribute('stroke', couleur); s.setAttribute('stroke-width', epaisseur);
+    s.setAttribute('stroke-linecap', 'round'); s.setAttribute('stroke-linejoin', 'round'); s.setAttribute('aria-hidden', 'true');
+    for (const d of chemins) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); s.append(p); }
+    return s;
+  }
+  // l'icône d'un programme (PNG extrait par le Rust), ou une icône neutre — jamais des lettres
+  function icone(source) {
+    if (source) { const i = document.createElement('img'); i.alt = ''; i.src = source; return i; }
+    const s = dessin(32, ['M4.5 6.5 A2 2 0 0 1 6.5 4.5 H17.5 A2 2 0 0 1 19.5 6.5 V17.5 A2 2 0 0 1 17.5 19.5 H6.5 A2 2 0 0 1 4.5 17.5 Z', 'M4.5 9 H19.5'], '#86868B', 1.6);
+    s.classList.add('icone-app');
+    return s;
+  }
+  function element(balise, classe, texte) {
+    const e = document.createElement(balise);
+    if (classe) e.className = classe;
+    if (texte !== undefined) e.textContent = texte;
+    return e;
   }
   function occupe(bouton, oui, libelle) {
     bouton.disabled = oui;
@@ -169,14 +195,15 @@
       const rang = document.createElement('div'); rang.className = 'fichier';
       const nom = document.createElement('span'); nom.className = 'nom-fichier'; nom.textContent = f.nom; nom.title = f.nom;
       const t = document.createElement('span'); t.className = 'meta'; t.textContent = taille(f.taille);
-      const d = document.createElement('span'); d.className = 'meta'; d.textContent = depuis(f.jours);
+      // un reste orphelin dit où il est (« Program Files ») ; un fichier, depuis quand il dort
+      const d = document.createElement('span'); d.className = 'meta'; d.textContent = f.lieu || depuis(f.jours);
       const voir = document.createElement('button'); voir.type = 'button'; voir.className = 'afficher'; voir.textContent = 'Afficher';
       voir.setAttribute('aria-label', 'Afficher ' + f.nom + ' dans l’Explorateur');
       voir.addEventListener('click', () => invoke('montrer', { id, index: f.index }).catch(() => {}));
       rang.append(nom, t, d, voir);
       return rang;
     });
-    if (lignes.length > MAX) enfants.push(texteSimple('plus', 'et ' + (lignes.length - MAX) + ' autres fichiers'));
+    if (lignes.length > MAX) enfants.push(texteSimple('plus', 'et ' + (lignes.length - MAX) + ' autres'));
     detail.replaceChildren(...enfants);
   }
   function texteSimple(classe, texte) { const p = document.createElement('div'); p.className = classe; p.textContent = texte; return p; }
@@ -230,6 +257,286 @@
     $('#note-admin').hidden = !b.admin_refuse;
   }
   $('#fini').addEventListener('click', () => { afficher('accueil'); disque(); });
+
+  /* ── 4 · Vos programmes ── */
+  let programmes = [];           // { index, nom, editeur, taille, date, icone } — l'index est celui du Rust
+  const choisis = new Set();
+  const dateCourte = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+  function installeLe(d) {
+    if (!d || d.length !== 8) return '';
+    return 'Installé le ' + dateCourte.format(new Date(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6, 8)));
+  }
+  const sansAccents = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const pluriel = (n, un, plusieurs) => n + ' ' + (n > 1 ? plusieurs : un);
+
+  async function ouvrirProgrammes() {
+    afficher('programmes');
+    choisis.clear();
+    programmes = [];
+    $('#recherche').value = '';
+    $('#liste-programmes').replaceChildren();
+    $('#liste-programmes').hidden = true;
+    majSelectionProgrammes();
+    const vide = $('#vide-programmes');
+    vide.hidden = false;
+    vide.classList.remove('alerte');
+    vide.textContent = 'Lecture de vos programmes…';
+    try {
+      programmes = await invoke('programmes');
+      rendreProgrammes();
+    } catch (e) {
+      vide.classList.add('alerte');
+      vide.textContent = 'La liste n’a pas pu être lue : ' + message(e);
+    }
+  }
+
+  function rendreProgrammes() {
+    const q = sansAccents($('#recherche').value.trim());
+    const lignes = programmes.filter((p) => !q || sansAccents(p.nom + ' ' + p.editeur).includes(q)).map((p) => {
+      const li = element('li', 'ligne' + (choisis.has(p.index) ? ' cochee' : ''));
+      const lab = element('label', 'prog');
+      const id = 'p-' + p.index;
+      lab.htmlFor = id;
+      const nom = element('span', 'nom');
+      nom.append(element('span', 'titre', p.nom), element('span', 'desc', p.editeur || ' '));
+      const c = element('input');
+      c.type = 'checkbox'; c.id = id; c.checked = choisis.has(p.index);
+      c.setAttribute('aria-label', 'Désinstaller ' + p.nom);
+      c.addEventListener('change', () => {
+        if (c.checked) choisis.add(p.index); else choisis.delete(p.index);
+        li.classList.toggle('cochee', c.checked);
+        majSelectionProgrammes();
+      });
+      lab.append(icone(p.icone), nom, element('span', 'date', installeLe(p.date)), element('span', 'taille', p.taille ? taille(p.taille) : '—'), c);
+      li.append(lab);
+      return li;
+    });
+    const ul = $('#liste-programmes');
+    ul.replaceChildren(...lignes);
+    ul.hidden = lignes.length === 0;
+    const vide = $('#vide-programmes');
+    vide.hidden = lignes.length > 0;
+    if (!lignes.length) vide.textContent = q ? 'Aucun programme ne correspond à « ' + $('#recherche').value.trim() + ' ».' : 'Aucun programme à proposer.';
+  }
+
+  function majSelectionProgrammes() {
+    const n = choisis.size;
+    const somme = programmes.filter((p) => choisis.has(p.index)).reduce((s, p) => s + (p.taille || 0), 0);
+    const sel = $('#selection-programmes');
+    sel.classList.remove('alerte');
+    if (n === 0) sel.textContent = 'Aucun programme choisi';
+    else { sel.replaceChildren(pluriel(n, 'programme', 'programmes') + ' · ', element('b', '', taille(somme))); }
+    const b = $('#desinstaller');
+    b.disabled = n === 0;
+    b.querySelector('.libelle').textContent = n === 0 ? 'Désinstaller' : 'Désinstaller ' + pluriel(n, 'programme', 'programmes');
+  }
+
+  $('#vers-programmes').addEventListener('click', ouvrirProgrammes);
+  $('#recherche').addEventListener('input', rendreProgrammes);
+  $('#retour-programmes').addEventListener('click', () => { afficher('accueil'); disque(); });
+
+  /* ── 5 · Désinstallation : un programme à la fois, avec SON désinstalleur ── */
+  const STATUTS = { attente: 'En attente', retire: 'Retiré', annule: 'Pas retiré', echec: 'Pas lancé' };
+  let ecouteDesinstallation = null;
+
+  $('#desinstaller').addEventListener('click', async () => {
+    const liste = programmes.filter((p) => choisis.has(p.index));
+    if (!liste.length) return;
+    afficher('desinstallation');
+    $('#titre-desinstallation').textContent = 'Désinstallation…';
+    $('#texte-desinstallation').textContent = 'Un programme à la fois. S’il vous pose des questions, répondez-lui : on attend.';
+    $('#retour-desinstallation').hidden = true;
+    const statuts = new Map();
+    $('#liste-desinstallation').replaceChildren(...liste.map((p) => {
+      const li = element('li', 'ligne');
+      const rang = element('div', 'etat');
+      const nom = element('span', 'nom');
+      nom.append(element('span', 'titre', p.nom), element('span', 'desc', p.editeur || ' '));
+      const s = element('span', 'statut attente', STATUTS.attente);
+      statuts.set(p.index, s);
+      rang.append(icone(p.icone), nom, s);
+      li.append(rang);
+      return li;
+    }));
+    let faits = 0;
+    const maj = () => {
+      $('#barre-desinstallation').style.width = (faits / liste.length * 100).toFixed(1) + '%';
+      $('#note-desinstallation').textContent = faits + ' sur ' + liste.length + ' · ensuite, on cherche ce qu’ils ont laissé';
+    };
+    maj();
+    if (ecouteDesinstallation) ecouteDesinstallation();
+    ecouteDesinstallation = await T.event.listen('desinstallation', (e) => {
+      const { index, etat } = e.payload;
+      const s = statuts.get(index);
+      if (!s) return;
+      s.className = 'statut ' + etat;
+      if (etat === 'en_cours') {
+        s.replaceChildren(element('span', 'mini-roue'), 'En cours…');
+        // un désinstalleur qui ne rend pas la main : « Passer » au bout de quelques secondes
+        setTimeout(() => {
+          if (!s.classList.contains('en_cours')) return;
+          const b = element('button', 'passer', 'Passer');
+          b.type = 'button';
+          b.addEventListener('click', () => invoke('passer').catch(() => {}));
+          s.append(b);
+        }, 8000);
+        return;
+      }
+      s.replaceChildren();
+      if (etat === 'retire') s.append(dessin(18, ['M5 12.5 L10 17.5 L19 7'], '#1B6E37', 2.6));
+      s.append(STATUTS[etat] || etat);
+      faits++;
+      maj();
+    });
+    try {
+      const etapes = await invoke('desinstaller', { indexes: liste.map((p) => p.index) });
+      const retires = etapes.filter((x) => x.etat === 'retire').length;
+      if (!retires) {
+        $('#titre-desinstallation').textContent = 'Rien n’a été retiré';
+        $('#texte-desinstallation').textContent = 'Les désinstallations ont été annulées ou n’ont pas abouti. Rien d’autre n’a été touché.';
+        $('#note-desinstallation').textContent = '';
+        $('#retour-desinstallation').hidden = false;
+        return;
+      }
+      $('#note-desinstallation').textContent = 'On cherche ce qu’ils ont laissé…';
+      montrerRestes(await invoke('chercher_restes'), retires);
+    } catch (e) {
+      $('#titre-desinstallation').textContent = 'La désinstallation n’a pas abouti';
+      $('#texte-desinstallation').textContent = message(e);
+      $('#retour-desinstallation').hidden = false;
+    }
+  });
+  $('#retour-desinstallation').addEventListener('click', ouvrirProgrammes);
+
+  /* ── 6 · Les restes ── */
+  let restes = { programmes: [], restes: [] };
+  let nbRetires = 0;
+  const DESSINS = {
+    dossier: ['M3.5 6.5 H9.5 L11.5 8.5 H20.5 V18.5 H3.5 Z'],
+    cle: ['M4 5 H10 V11 H4 Z', 'M14 5 H20 V11 H14 Z', 'M4 13 H10 V19 H4 Z', 'M14 13 H20 V19 H14 Z'],
+    raccourci: ['M6 4 H18 V20 H6 Z', 'M10 14 L14 10 M11 10 H14 V13']
+  };
+  function genreTexte(x) {
+    if (x.genre === 'cle') return 'Réglages du programme · sauvegardés avant';
+    if (x.genre === 'raccourci') return 'Raccourci vers un programme retiré';
+    return x.nombre ? 'Dossier · ' + espace(entier.format(x.nombre)) + ' ' + (x.nombre > 1 ? 'fichiers' : 'fichier') : 'Dossier vide';
+  }
+
+  function montrerRestes(r, retires) {
+    restes = r;
+    nbRetires = retires;
+    if (!r.restes.length) {
+      montrerBilanRestes({ programmes: retires, dossiers: 0, cles: 0, raccourcis: 0, octets: 0, admin_refuse: false, sauvegardes: null }, 'rien');
+      afficher('termine-programmes');
+      return;
+    }
+    const enfants = [];
+    r.programmes.forEach((prog, pi) => {
+      const siens = r.restes.filter((x) => x.programme === pi);
+      if (!siens.length) return;
+      const tete = element('li', 'ligne');
+      const g = element('div', 'groupe');
+      g.append(icone(prog.icone), element('span', 'titre', prog.nom),
+        element('span', 'compte', pluriel(siens.length, 'reste', 'restes') + ' · ' + taille(siens.reduce((s, x) => s + x.taille, 0))));
+      tete.append(g);
+      enfants.push(tete);
+      for (const x of siens) {
+        const sur = x.niveau === 'sur';
+        const li = element('li', 'ligne' + (sur ? ' cochee' : ''));
+        const lab = element('label', 'reste');
+        lab.htmlFor = 'r-' + x.index;
+        const nom = element('span', 'nom');
+        const genre = element('span', 'genre', genreTexte(x));
+        if (x.genre !== 'cle') {
+          const voir = element('button', 'afficher', 'Afficher');
+          voir.type = 'button';
+          voir.setAttribute('aria-label', 'Afficher ' + x.chemin + ' dans l’Explorateur');
+          voir.addEventListener('click', (e) => { e.preventDefault(); invoke('montrer_reste', { index: x.index }).catch(() => {}); });
+          genre.append(' · ', voir);
+        }
+        const chemin = element('span', 'chemin', (x.genre === 'cle' ? 'Registre · ' : '') + x.chemin);
+        chemin.title = x.chemin;
+        nom.append(chemin, genre);
+        const c = element('input');
+        c.type = 'checkbox'; c.id = 'r-' + x.index; c.dataset.index = x.index;
+        // « à vérifier » : jamais coché d'office
+        c.checked = sur;
+        c.setAttribute('aria-label', 'Supprimer ' + x.chemin);
+        c.addEventListener('change', () => { li.classList.toggle('cochee', c.checked); majRestes(); });
+        lab.append(dessin(22, DESSINS[x.genre] || DESSINS.dossier, '#515154', 1.8), nom,
+          element('span', 'pastille ' + (sur ? 'sure' : 'verifier'), sur ? 'Sans risque' : 'À vérifier'),
+          element('span', 'taille', x.genre === 'cle' ? '—' : taille(x.taille)), c);
+        li.append(lab);
+        enfants.push(li);
+      }
+    });
+    $('#liste-restes').replaceChildren(...enfants);
+    $('#titre-restes').textContent = (retires > 1 ? 'Ils ont laissé ' : 'Il a laissé ') + taille(r.restes.reduce((s, x) => s + x.taille, 0)) + ' derrière ' + (retires > 1 ? 'eux' : 'lui');
+    majRestes();
+    afficher('restes');
+  }
+
+  function cochesRestes() {
+    return [...document.querySelectorAll('#liste-restes input:checked')].map((c) => +c.dataset.index);
+  }
+  function majRestes() {
+    const coches = cochesRestes();
+    const somme = restes.restes.filter((x) => coches.includes(x.index)).reduce((s, x) => s + x.taille, 0);
+    const sel = $('#selection-restes');
+    sel.classList.remove('alerte');
+    sel.replaceChildren('Sélection : ', Object.assign(element('b', '', taille(somme)), { id: 'total-restes' }));
+    $('#supprimer-restes').disabled = coches.length === 0;
+  }
+
+  $('#supprimer-restes').addEventListener('click', async () => {
+    const indexes = cochesRestes();
+    if (!indexes.length) return;
+    const b = $('#supprimer-restes');
+    occupe(b, true, 'Suppression…');
+    $('#garder-restes').disabled = true;
+    const cases = [...document.querySelectorAll('#liste-restes input')];
+    cases.forEach((c) => { c.disabled = true; });
+    try {
+      montrerBilanRestes(await invoke('supprimer_restes', { indexes }));
+      afficher('termine-programmes');
+    } catch (e) {
+      const sel = $('#selection-restes');
+      sel.classList.add('alerte');
+      sel.textContent = 'La suppression n’a pas abouti : ' + message(e);
+    } finally {
+      cases.forEach((c) => { c.disabled = false; });
+      $('#garder-restes').disabled = false;
+      occupe(b, false, 'Supprimer les restes');
+    }
+  });
+  // la sortie de l'écran quand on ne veut rien supprimer (tout décoché, le bouton est éteint)
+  $('#garder-restes').addEventListener('click', () => {
+    montrerBilanRestes({ programmes: nbRetires, dossiers: 0, cles: 0, raccourcis: 0, octets: 0, admin_refuse: false, sauvegardes: null }, 'garde');
+    afficher('termine-programmes');
+  });
+
+  /* ── 7 · Programmes retirés ── */
+  // mode : 'rien' (aucun reste trouvé), 'garde' (restes gardés), sinon le bilan de la suppression
+  function montrerBilanRestes(b, mode) {
+    const n = b.programmes || nbRetires;
+    const plus = n > 1;
+    $('#nb-retires').textContent = pluriel(n, 'programme', 'programmes');
+    $('#legende-retires').textContent =
+      mode === 'rien' ? (plus ? 'retirés, sans rien laisser derrière eux' : 'retiré, sans rien laisser derrière lui')
+      : mode === 'garde' ? (plus ? 'retirés, leurs restes gardés' : 'retiré, ses restes gardés')
+      : (plus ? 'retirés, avec ' : 'retiré, avec ') + taille(b.octets) + ' de restes';
+    // rien n'a été supprimé : ni bilan à zéro, ni note sur la Corbeille
+    $('#bilan-restes').hidden = !!mode;
+    $('#note-sauvegarde').hidden = !!mode;
+    $('#bilan-dossiers').textContent = b.dossiers;
+    $('#bilan-cles').textContent = b.cles;
+    $('#bilan-raccourcis').textContent = b.raccourcis;
+    $('#note-sauvegarde').textContent = b.cles > 0 && b.sauvegardes
+      ? 'La sauvegarde du registre est dans ' + b.sauvegardes + ' : un double-clic la remet.'
+      : 'Les dossiers restent dans la Corbeille tant que vous ne la videz pas.';
+    $('#note-admin-restes').hidden = !b.admin_refuse;
+  }
+  $('#fini-programmes').addEventListener('click', () => { afficher('accueil'); disque(); });
 
   disque();
 })();

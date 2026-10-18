@@ -146,7 +146,8 @@ h1, p { margin: 0; }
 }
 .selection { font-size: 15px; color: var(--texte-2); }
 .selection b { font-weight: 700; color: var(--texte); }
-#nettoyer { min-width: 272px; height: 48px; padding: 0 26px; border-radius: 13px; font-size: 17px; box-shadow: 0 6px 18px rgba(0, 113, 227, 0.25); }
+/* le bouton plein des pieds (Nettoyer, Désinstaller, Supprimer les restes) */
+.pied .principal { min-width: 272px; height: 48px; padding: 0 26px; border-radius: 13px; font-size: 17px; box-shadow: 0 6px 18px rgba(0, 113, 227, 0.25); }
 
 /* ── 3 · Terminé ── */
 .termine { width: 600px; max-width: 100%; gap: 26px; }
@@ -161,13 +162,54 @@ h1, p { margin: 0; }
 .jauge { height: 10px; border-radius: 999px; background: var(--piste); overflow: hidden; display: flex; }
 .jauge-avant { background: #C7C7CC; width: 0; }
 .jauge-gain { background: var(--accent); width: 0; }
-#fini { min-width: 232px; height: 50px; padding: 0 26px; border-radius: 13px; font-size: 17px; }
+#fini, #fini-programmes, #retour-desinstallation { min-width: 232px; height: 50px; padding: 0 26px; border-radius: 13px; font-size: 17px; }
+
+/* ── 4 à 7 · Programmes, désinstallation, restes (maquette validée le 18/10/2026) ── */
+.outils-entete { display: flex; align-items: center; gap: 12px; }
+.recherche { display: flex; align-items: center; gap: 8px; width: 260px; height: 40px; padding: 0 12px; background: #FFFFFF; border: 1px solid var(--filet); border-radius: 10px; cursor: text; }
+.recherche:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+.recherche input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 15px; color: var(--texte); }
+.recherche input::placeholder { color: var(--texte-2); }
+.ligne.cochee { background: color-mix(in srgb, var(--accent) 5%, #FFFFFF); }
+.prog { display: grid; grid-template-columns: 40px minmax(0, 1fr) 150px 90px 28px; align-items: center; gap: 16px; height: 60px; padding: 0 22px; cursor: pointer; }
+.prog img, .etat img, .groupe img, .icone-app { width: 32px; height: 32px; border-radius: 8px; object-fit: contain; }
+.prog .date { font-size: 14px; color: var(--texte-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prog input, .reste input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); cursor: inherit; }
+.vide-liste-programmes { padding: 24px 0; text-align: center; }
+
+.desinstall { gap: 26px; }
+.desinstall .titres { display: flex; flex-direction: column; gap: 10px; }
+.desinstall h1 { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; outline: none; }
+.desinstall p { font-size: 17px; line-height: 1.5; color: var(--texte-2); }
+.desinstall .liste { width: 100%; margin: 0; max-height: 330px; }
+.etat { display: grid; grid-template-columns: 40px minmax(0, 1fr) 190px; align-items: center; gap: 16px; height: 64px; padding: 0 22px; text-align: left; }
+.etat .statut { justify-self: end; display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; white-space: nowrap; }
+.statut.retire { color: var(--sur-texte); }
+.statut.en_cours { color: var(--accent); }
+.statut.attente, .statut.annule { color: var(--texte-2); font-weight: 500; }
+.statut.echec { color: var(--verif-texte); }
+.passer { border: 0; background: none; padding: 2px 0 2px 6px; font: inherit; font-size: 14px; font-weight: 500; color: #0066CC; cursor: pointer; }
+.mini-roue { width: 16px; height: 16px; border-radius: 50%; border: 2.2px solid color-mix(in srgb, var(--accent) 25%, transparent); border-top-color: var(--accent); animation: tourne 800ms linear infinite; }
+.progression { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+.barre-prog { width: 100%; height: 8px; border-radius: 999px; background: var(--piste); overflow: hidden; }
+.barre-prog > div { height: 100%; width: 0; background: var(--accent); border-radius: 999px; transition: width 300ms var(--sortie); }
+
+.groupe { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 16px; height: 52px; padding: 0 22px; background: #FAFAFC; }
+.groupe .titre { font-size: 16px; font-weight: 700; }
+.groupe .compte { font-size: 14px; color: var(--texte-2); }
+.reste { display: grid; grid-template-columns: 40px minmax(0, 1fr) 110px 90px 28px; align-items: center; gap: 16px; min-height: 54px; padding: 6px 22px; cursor: pointer; }
+.reste > svg { justify-self: center; }
+.reste .chemin { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: text; }
+.reste .genre { font-size: 13px; color: var(--texte-2); }
+.reste .afficher { padding: 0 0 0 4px; }
 
 /* moins de mouvement : ni fondu, ni anneau qui se remplit, ni roue qui tourne */
 @media (prefers-reduced-motion: reduce) {
   .ecran { animation: none; }
   #arc { transition: none; }
   .roue { animation: none; border-top-color: rgba(255, 255, 255, 0.35); border-right-color: #FFFFFF; }
+  .mini-roue { animation: none; }
+  .barre-prog > div { transition: none; }
   .principal { transition: none; }
   .principal:active:not(:disabled) { transform: none; }
 }

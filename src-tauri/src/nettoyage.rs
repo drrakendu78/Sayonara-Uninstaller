@@ -59,22 +59,6 @@ pub fn vider(racine: &Path, maintenant: SystemTime) -> Mesure {
     fait
 }
 
-/// Le programme relancé en administrateur (`--nettoyer-admin temp,maj`) : il ne vide que les
-/// dossiers « admin » des catégories reçues (Windows\Temp, restes des mises à jour). Les
-/// identifiants inconnus sont ignorés ; aucun chemin n'est accepté.
-pub fn nettoyer_admin(ids: &str) -> i32 {
-    let maintenant = SystemTime::now();
-    for id in ids.split(',').map(str::trim) {
-        if id != "temp" && id != "maj" {
-            continue;
-        }
-        for r in categories::racines(id).into_iter().filter(|r| r.admin) {
-            vider(&r.chemin, maintenant);
-        }
-    }
-    0
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

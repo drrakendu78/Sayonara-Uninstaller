@@ -17,7 +17,8 @@ use windows_sys::Win32::System::Com::{
 };
 use windows_sys::Win32::System::Threading::{GetExitCodeProcess, WaitForSingleObject, INFINITE};
 use windows_sys::Win32::UI::Shell::{
-    FOLDERID_Downloads, FOLDERID_LocalAppData, FOLDERID_LocalAppDataLow, SHEmptyRecycleBinW,
+    FOLDERID_Desktop, FOLDERID_Documents, FOLDERID_Downloads, FOLDERID_LocalAppData, FOLDERID_LocalAppDataLow,
+    FOLDERID_PublicDesktop, SHEmptyRecycleBinW,
     SHFileOperationW, SHGetKnownFolderPath, SHQueryRecycleBinW, ShellExecuteExW, FOF_ALLOWUNDO,
     FOF_NOCONFIRMATION, FOF_NOERRORUI, FOF_SILENT, FOF_WANTNUKEWARNING, FO_DELETE,
     SEE_MASK_NOASYNC, SEE_MASK_NOCLOSEPROCESS, SHELLEXECUTEINFOW, SHERB_NOCONFIRMATION,
@@ -151,6 +152,16 @@ pub fn telechargements() -> Option<PathBuf> {
     dossier_connu(&FOLDERID_Downloads)
 }
 
+/// Le dossier Documents (les sauvegardes du registre y vont : Documents\Nettoyeur).
+pub fn documents() -> Option<PathBuf> {
+    dossier_connu(&FOLDERID_Documents)
+}
+
+/// Le Bureau de l'utilisateur (là où Windows le met, OneDrive compris) et le Bureau public.
+pub fn bureaux() -> Vec<PathBuf> {
+    [dossier_connu(&FOLDERID_Desktop), dossier_connu(&FOLDERID_PublicDesktop)].into_iter().flatten().collect()
+}
+
 /// Envoie des fichiers à la Corbeille (récupérables). Si l'un d'eux est trop gros pour elle,
 /// Windows DEMANDE avant de le supprimer pour de bon (FOF_WANTNUKEWARNING) : rien ne disparaît
 /// définitivement sans un oui.
@@ -189,8 +200,8 @@ pub enum Eleve {
     Echec,
 }
 
-/// Relance CE programme en administrateur (une seule demande UAC) avec des arguments fixes,
-/// et attend qu'il ait fini. Aucun chemin ne passe : seulement des identifiants de catégorie.
+/// Relance CE programme en administrateur (une seule demande UAC) et attend qu'il ait fini.
+/// Aucun chemin ne passe par la ligne de commande : seulement « --admin » et l'empreinte du plan.
 pub fn relancer_eleve(arguments: &str) -> Eleve {
     let Ok(exe) = std::env::current_exe() else {
         return Eleve::Echec;

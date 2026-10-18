@@ -5,11 +5,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    // Relancé en administrateur par le nettoyage (une seule demande UAC) : on vide les dossiers
-    // « admin » des catégories reçues, sans fenêtre, puis on sort. Seuls des identifiants passent.
+    // Relancé en administrateur par le nettoyage (une seule demande UAC) : on exécute le plan
+    // déposé dans le dossier de l'appli — après avoir tout revérifié —, sans fenêtre, puis on sort.
     let args: Vec<String> = std::env::args().collect();
-    if args.len() == 3 && args[1] == "--nettoyer-admin" {
-        std::process::exit(nettoyeur_lib::nettoyer_admin(&args[2]));
+    if args.len() == 3 && args[1] == "--admin" {
+        std::process::exit(nettoyeur_lib::programme_eleve(&args[2]));
     }
     nettoyeur_lib::run()
 }

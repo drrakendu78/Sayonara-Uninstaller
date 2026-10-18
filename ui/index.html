@@ -49,6 +49,7 @@
         <span class="libelle">Analyser mon PC</span>
       </button>
       <div class="note" id="note-accueil" role="status">Rien n’est supprimé sans votre accord.</div>
+      <button type="button" class="lien" id="vers-programmes">Désinstaller des programmes</button>
     </div>
   </main>
 
@@ -127,6 +128,16 @@
         </label>
         <div class="detail" hidden></div>
       </li>
+      <li class="ligne" data-id="orphelins">
+        <label class="rang" for="c-orphelins">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#515154" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5 H9.5 L11.5 8.5 H20.5 V18.5 H3.5 Z"/><path d="M9.5 13.5 H14.5"/></svg>
+          <span class="nom"><span class="titre">Restes de programmes désinstallés</span><span class="desc">Dossiers oubliés dans Program Files — la liste s’ouvre avant</span></span>
+          <span class="pastille verifier">À vérifier</span>
+          <span class="taille">—</span>
+          <input id="c-orphelins" type="checkbox" aria-label="Retirer les restes de programmes désinstallés">
+        </label>
+        <div class="detail" hidden></div>
+      </li>
     </ul>
   </main>
   <footer class="pied" id="pied" hidden>
@@ -153,6 +164,86 @@
       <button type="button" class="principal" id="fini">Terminé</button>
       <div class="note" id="note-corbeille">Les fichiers « à vérifier » restent dans la Corbeille tant que vous ne la videz pas.</div>
       <div class="note alerte" id="note-admin" hidden>Les restes des mises à jour n’ont pas été nettoyés : l’autorisation a été refusée.</div>
+    </div>
+  </main>
+
+  <!-- 4 · VOS PROGRAMMES -->
+  <main class="ecran resultats" id="programmes" hidden>
+    <div class="entete">
+      <div class="titres">
+        <h1 tabindex="-1">Vos programmes</h1>
+        <p id="sous-titre-programmes">Cochez ceux à retirer : on nettoie aussi ce qu’ils laissent derrière eux.</p>
+      </div>
+      <div class="outils-entete">
+        <button type="button" class="lien" id="retour-programmes">Retour</button>
+        <label class="recherche">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#515154" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 L21 21"/></svg>
+          <input id="recherche" type="search" placeholder="Rechercher un programme" aria-label="Rechercher un programme" autocomplete="off" spellcheck="false">
+        </label>
+      </div>
+    </div>
+    <ul class="carte liste" id="liste-programmes" aria-label="Programmes installés"></ul>
+    <div class="note vide-liste-programmes" id="vide-programmes" role="status" hidden></div>
+  </main>
+  <footer class="pied" id="pied-programmes" hidden>
+    <div class="selection" id="selection-programmes" role="status">Aucun programme choisi</div>
+    <button type="button" class="principal" id="desinstaller" disabled>
+      <span class="roue" aria-hidden="true"></span>
+      <span class="libelle">Désinstaller</span>
+    </button>
+  </footer>
+
+  <!-- 5 · DÉSINSTALLATION -->
+  <main class="ecran centre" id="desinstallation" hidden>
+    <div class="colonne termine desinstall">
+      <div class="titres">
+        <h1 tabindex="-1" id="titre-desinstallation">Désinstallation…</h1>
+        <p id="texte-desinstallation">Un programme à la fois. S’il vous pose des questions, répondez-lui : on attend.</p>
+      </div>
+      <ul class="carte liste" id="liste-desinstallation" aria-live="polite"></ul>
+      <div class="progression">
+        <div class="barre-prog" aria-hidden="true"><div id="barre-desinstallation"></div></div>
+        <div class="note" id="note-desinstallation" role="status"></div>
+      </div>
+      <button type="button" class="principal" id="retour-desinstallation" hidden>Retour</button>
+    </div>
+  </main>
+
+  <!-- 6 · LES RESTES -->
+  <main class="ecran resultats" id="restes" hidden>
+    <div class="entete">
+      <div class="titres">
+        <h1 tabindex="-1" id="titre-restes">Ils ont laissé 0 Ko derrière eux</h1>
+        <p>Tout part à la Corbeille, et le registre est sauvegardé avant. Les « à vérifier » ne sont jamais cochés d’office.</p>
+      </div>
+      <button type="button" class="lien" id="garder-restes">Tout garder</button>
+    </div>
+    <ul class="carte liste" id="liste-restes" aria-label="Restes trouvés"></ul>
+  </main>
+  <footer class="pied" id="pied-restes" hidden>
+    <div class="selection" id="selection-restes" role="status">Sélection : <b id="total-restes">0 Ko</b></div>
+    <button type="button" class="principal" id="supprimer-restes">
+      <span class="roue" aria-hidden="true"></span>
+      <span class="libelle">Supprimer les restes</span>
+    </button>
+  </footer>
+
+  <!-- 7 · PROGRAMMES RETIRÉS -->
+  <main class="ecran centre" id="termine-programmes" hidden>
+    <div class="colonne termine">
+      <div class="coche-ronde"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#1B6E37" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Programmes retirés"><path d="M5 12.5 L10 17.5 L19 7"/></svg></div>
+      <div class="gain">
+        <h1 class="chiffre" tabindex="-1" id="nb-retires">0 programme</h1>
+        <div class="legende" id="legende-retires">retirés</div>
+      </div>
+      <div class="carte bilan" id="bilan-restes">
+        <div class="bilan-ligne"><span>Dossiers envoyés à la Corbeille</span><b id="bilan-dossiers">0</b></div>
+        <div class="bilan-ligne"><span>Réglages retirés du registre (sauvegardés)</span><b id="bilan-cles">0</b></div>
+        <div class="bilan-ligne"><span>Raccourcis morts</span><b id="bilan-raccourcis">0</b></div>
+      </div>
+      <button type="button" class="principal" id="fini-programmes">Terminé</button>
+      <div class="note" id="note-sauvegarde">Les dossiers restent dans la Corbeille tant que vous ne la videz pas.</div>
+      <div class="note alerte" id="note-admin-restes" hidden>Une partie des restes n’a pas été retirée : l’autorisation a été refusée.</div>
     </div>
   </main>
 </div>
