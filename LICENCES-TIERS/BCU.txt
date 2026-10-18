@@ -1,7 +1,7 @@
 Bulk Crap Uninstaller — Copyright 2017 Marcin Szeniak — Apache License 2.0
 https://github.com/Klocman/Bulk-Crap-Uninstaller (lu au commit 30da609, 8 septembre 2026)
 
-Ce que le Nettoyeur en reprend
+Ce que Sayonara Uninstaller en reprend
 ------------------------------
 La LOGIQUE de détection des restes de programmes, réécrite en Rust (aucun fichier C# copié) :
 
@@ -23,7 +23,7 @@ Modifications (licence Apache 2.0, section 4 b)
   - rien hors du disque C: ; Documents, Bureau (hors raccourcis) et Téléchargements ne sont
     jamais fouillés.
 
-Le reste du Nettoyeur est sous sa propre licence (PolyForm Strict 1.0.0) ; ce qui vient de BCU
+Le reste de Sayonara Uninstaller est sous sa propre licence (PolyForm Strict 1.0.0) ; ce qui vient de BCU
 reste sous la licence Apache 2.0 ci-dessous.
 
 ======================================================================================

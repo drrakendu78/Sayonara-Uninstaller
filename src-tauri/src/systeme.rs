@@ -53,7 +53,7 @@ fn lettre(p: &Path) -> Option<char> {
     }
 }
 
-/// Le chemin est-il sur le disque système ? Le Nettoyeur ne travaille QUE sur C: — ni les
+/// Le chemin est-il sur le disque système ? L'appli ne travaille QUE sur C: — ni les
 /// autres disques, ni le réseau.
 pub fn sur_disque_systeme(p: &Path) -> bool {
     match (lettre(p), lettre(&disque_systeme())) {
@@ -152,7 +152,7 @@ pub fn telechargements() -> Option<PathBuf> {
     dossier_connu(&FOLDERID_Downloads)
 }
 
-/// Le dossier Documents (les sauvegardes du registre y vont : Documents\Nettoyeur).
+/// Le dossier Documents (les sauvegardes du registre y vont : Documents\Sayonara Uninstaller).
 pub fn documents() -> Option<PathBuf> {
     dossier_connu(&FOLDERID_Documents)
 }

@@ -1,4 +1,4 @@
-Première version du Nettoyeur : de la place sur le disque C:, sans jamais toucher aux photos, aux documents ni aux jeux.
+Première version de Sayonara Uninstaller : de la place sur le disque C:, sans jamais toucher aux photos, aux documents ni aux jeux.
 
 - Analyse en quelques secondes : fichiers temporaires, Corbeille, restes des mises à jour Windows, caches des navigateurs (on reste connecté) et des jeux, vieux installateurs et gros fichiers oubliés des Téléchargements, restes de programmes déjà désinstallés. Ce qui est « à vérifier » n'est jamais coché d'office et part à la Corbeille.
 - Désinstaller des programmes : un par un, avec leur propre désinstalleur, puis ce qu'ils laissent derrière eux (dossiers, réglages du registre sauvegardés avant, raccourcis morts), d'après la logique de Bulk Crap Uninstaller.

@@ -32,16 +32,23 @@ pub struct Plan {
     pub cles: Vec<String>,
 }
 
+/// L'identifiant de l'appli (tauri.conf.json) : le nom de son dossier de données. Le programme relancé
+/// en administrateur n'a pas la configuration de Tauri sous la main, d'où la constante (un test la
+/// garde alignée).
+pub const IDENTIFIANT: &str = "com.drrakendu78.sayonara";
+/// Le nom montré à l'utilisateur, aussi celui du dossier des sauvegardes dans Documents.
+pub const NOM: &str = "Sayonara Uninstaller";
+
 /// Le seul fichier de plan accepté.
 pub fn fichier_plan() -> Option<PathBuf> {
-    Some(systeme::appdata_local()?.join("com.drrakendu78.nettoyeur").join("plan-admin.json"))
+    Some(systeme::appdata_local()?.join(IDENTIFIANT).join("plan-admin.json"))
 }
 
-/// Où vont les sauvegardes du registre : Documents\Nettoyeur\Sauvegardes\<date>.
+/// Où vont les sauvegardes du registre : Documents\Sayonara Uninstaller\Sauvegardes\<date>.
 pub fn dossier_sauvegardes() -> Option<PathBuf> {
     let mut maintenant: SYSTEMTIME = unsafe { std::mem::zeroed() };
     unsafe { GetLocalTime(&mut maintenant) };
-    let d = systeme::documents()?.join("Nettoyeur").join("Sauvegardes").join(horodatage(&maintenant));
+    let d = systeme::documents()?.join(NOM).join("Sauvegardes").join(horodatage(&maintenant));
     std::fs::create_dir_all(&d).ok()?;
     Some(d)
 }
@@ -131,6 +138,15 @@ mod tests {
     fn horodatage_de_reference() {
         let t = SYSTEMTIME { wYear: 2026, wMonth: 10, wDayOfWeek: 0, wDay: 8, wHour: 9, wMinute: 5, wSecond: 0, wMilliseconds: 0 };
         assert_eq!(horodatage(&t), "2026-10-08 09h05");
+    }
+
+    /// Le programme relancé en administrateur cherche son plan dans le dossier de l'appli : même
+    /// identifiant et même nom que tauri.conf.json, sinon il ne le trouverait pas.
+    #[test]
+    fn identifiant_et_nom_alignes_sur_la_configuration() {
+        let conf: serde_json::Value = serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        assert_eq!(conf["identifier"], IDENTIFIANT);
+        assert_eq!(conf["productName"], NOM);
     }
 
     #[test]

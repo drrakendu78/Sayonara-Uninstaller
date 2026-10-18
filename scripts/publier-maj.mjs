@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: © 2026 Djamel Lazreg (drrakendu78) <https://djamellazreg.fr>
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 //
-// Publication d'une version du Nettoyeur sur GitHub : une « release » du dépôt avec l'installeur, sa
+// Publication d'une version de Sayonara Uninstaller sur GitHub : une « release » du dépôt avec l'installeur, sa
 // signature et latest.json, que l'appli lit à l'adresse de tauri.conf.json
 // (…/releases/latest/download/latest.json). Repris d'Atreia Hub (scripts/publier-maj.mjs).
 //
@@ -18,8 +18,9 @@
 // en ligne : l'appli ne voit jamais une version dont l'installeur manque ; relecture par HTTPS :
 // latest.json servi, installeur retéléchargé, même empreinte, signature revérifiée.
 //
-// La clé privée reste dans ~/.tauri/nettoyeur.key (jamais dans le dépôt), sans mot de passe. La perdre,
-// c'est ne plus pouvoir mettre à jour les Nettoyeur installés : la sauvegarder.
+// La clé privée reste dans ~/.tauri/sayonara-uninstaller.key (jamais dans le dépôt), sans mot de passe.
+// La perdre, c'est ne plus pouvoir mettre à jour les applis installées : la sauvegarder.
+// L'installeur est publié sans espace dans son nom (GitHub changerait l'espace en point).
 // Publier passe par `gh` (GitHub CLI), connecté au compte propriétaire du dépôt.
 import { spawnSync } from 'node:child_process';
 import crypto from 'node:crypto';
@@ -31,7 +32,7 @@ import { verify } from './minisign.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TAURI = path.join(ROOT, 'src-tauri');
-const KEY = path.join(os.homedir(), '.tauri', 'nettoyeur.key');
+const KEY = path.join(os.homedir(), '.tauri', 'sayonara-uninstaller.key');
 const PLATFORM = 'windows-x86_64';
 
 const args = process.argv.slice(2);
@@ -64,7 +65,8 @@ if (!up.pubkey || !depot) die('tauri.conf.json : plugins.updater incomplet (pubk
 if (!up.requireSignedVersion) die('tauri.conf.json : requireSignedVersion doit rester à true');
 const tag = 'v' + version;
 const exeName = `${conf.productName}_${version}_x64-setup.exe`;
-const url = `https://github.com/${depot}/releases/download/${tag}/${exeName}`;
+const nomPublie = exeName.replace(/\s+/g, '-');
+const url = `https://github.com/${depot}/releases/download/${tag}/${nomPublie}`;
 let notes = opt('--notes');
 if (opt('--notes-file')) notes = fs.readFileSync(path.resolve(opt('--notes-file')), 'utf8');
 notes = String(notes || '').replace(/\r/g, '').trim();
@@ -134,15 +136,19 @@ if (flag('--essai')) {
 }
 
 // ── Publication : brouillon avec l'installeur et sa signature, latest.json, puis mise en ligne ──
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'nettoyeur-maj-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sayonara-maj-'));
 try {
   const fichierNotes = path.join(tmp, 'notes.md');
   fs.writeFileSync(fichierNotes, notes + '\n');
   const latest = path.join(tmp, 'latest.json');
   fs.writeFileSync(latest, JSON.stringify(manifest, null, 2) + '\n');
+  // les mêmes octets, sous le nom publié
+  const exePublie = path.join(tmp, nomPublie);
+  fs.copyFileSync(exe, exePublie);
+  fs.copyFileSync(exe + '.sig', exePublie + '.sig');
   r = existe
-    ? run('gh', ['release', 'upload', tag, exe, exe + '.sig', '--repo', depot, '--clobber'])
-    : run('gh', ['release', 'create', tag, exe, exe + '.sig', '--repo', depot, '--draft', '--target', head,
+    ? run('gh', ['release', 'upload', tag, exePublie, exePublie + '.sig', '--repo', depot, '--clobber'])
+    : run('gh', ['release', 'create', tag, exePublie, exePublie + '.sig', '--repo', depot, '--draft', '--target', head,
       '--title', `${conf.productName} ${version}`, '--notes-file', fichierNotes]);
   if (r.status !== 0) die('envoi de l’installeur : ' + why(r));
   step(`${tag} : installeur et signature envoyés${existe ? ' (remplacés)' : ' (brouillon)'}`);
@@ -171,4 +177,4 @@ const got = Buffer.from(await dl.arrayBuffer());
 if (sha256(got) !== sum) die('installeur servi différent de l’installeur local');
 try { verify(got, p.signature, up.pubkey); } catch (e) { die('signature de l’installeur servi : ' + e.message); }
 step(`relu par HTTPS : ${p.url} · ${mo(got.length)} · empreinte et signature conformes`);
-console.log(`\nNettoyeur ${version} est publiée : les Nettoyeur installés la proposent à leur prochaine recherche (au lancement, puis toutes les 30 min).`);
+console.log(`\n${conf.productName} ${version} est publiée : les applis installées la proposent à leur prochaine recherche (au lancement, puis toutes les 30 min).`);

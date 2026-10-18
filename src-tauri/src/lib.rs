@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: © 2026 Djamel Lazreg (drrakendu78) <https://djamellazreg.fr>
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 //
-// Nettoyeur — les commandes appelées par l'interface. Le contrat tient en une règle : le front
+// Sayonara Uninstaller — les commandes appelées par l'interface. Le contrat tient en une règle : le front
 // n'envoie QUE des identifiants (catégories) et des NUMÉROS dans les listes gardées ici (fichiers
 // d'une catégorie, programmes, restes). Aucun chemin ne vient jamais de l'interface.
 
@@ -489,7 +489,7 @@ async fn supprimer_restes(indexes: Vec<usize>, etat: State<'_, Etat>) -> Result<
         let compte = |g: Genre| surs.iter().filter(|r| r.genre == g && parti(r)).count();
         let octets = surs.iter().filter(|r| r.genre != Genre::Cle && parti(r)).map(|r| r.taille).sum();
         if !plan.cles.is_empty() && sauvegardes.is_none() {
-            sauvegardes = systeme::documents().map(|d| d.join("Nettoyeur").join("Sauvegardes"));
+            sauvegardes = systeme::documents().map(|d| d.join(admin::NOM).join("Sauvegardes"));
         }
         Ok(BilanRestes {
             programmes: nb_programmes,
@@ -529,7 +529,7 @@ pub fn run() {
             maj::maj_installer
         ])
         .run(tauri::generate_context!())
-        .expect("Nettoyeur n'a pas pu démarrer");
+        .expect("Sayonara Uninstaller n'a pas pu démarrer");
 }
 
 #[cfg(test)]
@@ -558,11 +558,11 @@ mod tests {
     }
 
     /// Sur la VRAIE machine, en LECTURE SEULE : les restes qu'on trouverait à un programme
-    /// INSTALLÉ si on le retirait (ses dossiers sont encore là). `NETTOYEUR_PROGRAMME=Blender`.
+    /// INSTALLÉ si on le retirait (ses dossiers sont encore là). `SAYONARA_PROGRAMME=Blender`.
     #[test]
     #[ignore]
     fn restes_reels_d_un_programme_installe() {
-        let nom = std::env::var("NETTOYEUR_PROGRAMME").unwrap_or_else(|_| "Blender".into());
+        let nom = std::env::var("SAYONARA_PROGRAMME").unwrap_or_else(|_| "Blender".into());
         let tous = programmes::lister();
         let p = tous.iter().find(|p| p.nom.to_lowercase().contains(&nom.to_lowercase())).expect("programme introuvable").clone();
         let autres: Vec<Programme> = tous.into_iter().filter(|x| x.cle != p.cle).collect();

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: © 2026 Djamel Lazreg (drrakendu78) <https://djamellazreg.fr>
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 //
-// Nettoyeur — l'interface. Elle n'envoie au programme QUE des identifiants de catégorie (et un
+// Sayonara Uninstaller — l'interface. Elle n'envoie au programme QUE des identifiants de catégorie (et un
 // numéro dans la liste gardée côté Rust pour « Afficher ») : jamais un chemin. Tout le texte
 // passe par textContent.
 'use strict';
@@ -559,7 +559,7 @@
       const p = MAJ.total ? Math.min(100, Math.floor((MAJ.recu / MAJ.total) * 100)) : null;
       pastille.replaceChildren(fleche, MAJ.phase === 'installation' ? 'Installation…' : 'Téléchargement');
       if (MAJ.phase !== 'installation' && p !== null) pastille.append(' ', element('span', 'pourcent', p + ' %'));
-      pastille.title = 'Nettoyeur ' + MAJ.version + ' : il se ferme, s’installe puis se relance';
+      pastille.title = 'Sayonara Uninstaller ' + MAJ.version + ' : il se ferme, s’installe puis se relance';
       return;
     }
     pastille.disabled = false;
@@ -568,7 +568,7 @@
       : MAJ.confirmer ? 'Installer et relancer ?'
       : MAJ.erreur ? 'Réessayer la mise à jour'
       : 'Mise à jour ' + MAJ.version);
-    pastille.title = MAJ.erreur || 'Nettoyeur ' + MAJ.version + ' est disponible : il se ferme, s’installe puis se relance';
+    pastille.title = MAJ.erreur || 'Sayonara Uninstaller ' + MAJ.version + ' est disponible : il se ferme, s’installe puis se relance';
   }
 
   async function chercherMaj() {

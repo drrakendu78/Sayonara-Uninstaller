@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: © 2026 Djamel Lazreg (drrakendu78) <https://djamellazreg.fr>
 // SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
 //
-// Mises à jour du Nettoyeur depuis les publications GitHub de son dépôt : `latest.json` et
+// Mises à jour de Sayonara Uninstaller depuis les publications GitHub de son dépôt : `latest.json` et
 // installeur signé, publiés par scripts/publier-maj.mjs, lus à l'adresse de tauri.conf.json —
 // l'interface ne donne jamais d'adresse. Repris d'Atreia Hub (update.rs).
 //
@@ -61,7 +61,7 @@ pub async fn maj_verifier(app: AppHandle) -> Result<Value, String> {
 }
 
 /// Télécharge la dernière version, vérifie sa signature et lance son installeur (barre de
-/// progression), qui relance ensuite le Nettoyeur : l'appli se ferme dès l'installeur lancé. Depuis
+/// progression), qui relance ensuite l'appli : elle se ferme dès l'installeur lancé. Depuis
 /// la fenêtre principale seulement, et jamais en mode développement.
 #[tauri::command]
 pub async fn maj_installer(app: AppHandle, window: WebviewWindow) -> Result<(), String> {
@@ -111,7 +111,7 @@ mod tests {
     /// version, date, adresse et signature de la plateforme Windows (clé `windows-x86_64`).
     #[test]
     fn latest_json_lisible_par_le_module() {
-        let url = "https://github.com/drrakendu78/Nettoyeur/releases/download/v0.2.0/Nettoyeur_0.2.0_x64-setup.exe";
+        let url = "https://github.com/drrakendu78/Sayonara-Uninstaller/releases/download/v0.2.0/Sayonara-Uninstaller_0.2.0_x64-setup.exe";
         let v = serde_json::json!({
             "version": "0.2.0",
             "notes": "Ligne 1\nLigne 2",
@@ -132,7 +132,7 @@ mod tests {
     fn configuration_des_mises_a_jour() {
         let conf: serde_json::Value = serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
         let maj = &conf["plugins"]["updater"];
-        assert_eq!(maj["endpoints"], serde_json::json!(["https://github.com/drrakendu78/Nettoyeur/releases/latest/download/latest.json"]));
+        assert_eq!(maj["endpoints"], serde_json::json!(["https://github.com/drrakendu78/Sayonara-Uninstaller/releases/latest/download/latest.json"]));
         assert_eq!(maj["requireSignedVersion"], true);
         assert_eq!(maj["windows"]["installMode"], "passive");
         let cle = maj["pubkey"].as_str().unwrap();

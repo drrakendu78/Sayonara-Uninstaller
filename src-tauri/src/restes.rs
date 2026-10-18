@@ -325,7 +325,7 @@ pub fn chercher(retires: &[Retire], installes: &[Programme]) -> Vec<Reste> {
 }
 
 /// Fusionne les doublons (leurs raisons s'additionnent), écarte les douteux, ce qui est sous un
-/// autre reste, et ce qui touche au Nettoyeur lui-même ; mesure les dossiers.
+/// autre reste, et ce qui touche à l'appli elle-même ; mesure les dossiers.
 fn finaliser(entree: Vec<Reste>) -> Vec<Reste> {
     let mut fusion: Vec<Reste> = Vec::new();
     for r in entree {

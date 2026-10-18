@@ -47,7 +47,8 @@ const PROTEGES: [&str; 22] = [
 
 pub fn protege(nom: &str) -> bool {
     let n = format!(" {}", nom.to_lowercase());
-    PROTEGES.iter().any(|m| n.contains(m)) || n.trim() == "nettoyeur"
+    // l'appli elle-même ne se propose pas
+    PROTEGES.iter().any(|m| n.contains(m)) || n.trim() == crate::admin::NOM.to_lowercase()
 }
 
 fn date_valide(d: &str) -> Option<String> {
@@ -199,7 +200,7 @@ mod tests {
     fn les_composants_systeme_sont_masques() {
         for n in ["Microsoft Visual C++ 2015-2022 Redistributable (x64)", "Microsoft Windows Desktop Runtime 10.0.13 (x64)",
                   "Windows Software Development Kit - Windows 10.0.26100", "AMD Chipset Software", "Microsoft Edge",
-                  "Microsoft Edge WebView2 Runtime", "AMD Software", "Vulkan Run Time Libraries"] {
+                  "Microsoft Edge WebView2 Runtime", "AMD Software", "Vulkan Run Time Libraries", "Sayonara Uninstaller"] {
             assert!(protege(n), "{n} devrait être masqué");
         }
         for n in ["Discord", "Blender", "Snap Camera", "RSI Launcher", "Deezer", "Docker Desktop"] {

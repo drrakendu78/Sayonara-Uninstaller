@@ -1,8 +1,14 @@
-# Nettoyeur
+# Sayonara Uninstaller
 
-Petite appli grand public (Tauri 2) qui fait de la place sur le disque **C:**, sans jamais toucher
-aux photos, aux documents ni aux jeux, et qui désinstalle les programmes avec ce qu'ils laissent
-derrière eux. Maquette : claude.ai/artifact/TJa7mqybpLY1iUbJiNohjh.
+Petite appli grand public (Tauri 2) qui désinstalle les programmes avec ce qu'ils laissent derrière
+eux et fait de la place sur le disque **C:**, sans jamais toucher aux photos, aux documents ni aux
+jeux. Maquette : claude.ai/artifact/TJa7mqybpLY1iUbJiNohjh. (Son premier nom : « Nettoyeur ».)
+
+**Télécharger :** la dernière version est dans les
+[publications](https://github.com/drrakendu78/Sayonara-Uninstaller/releases/latest)
+(`Sayonara-Uninstaller_<version>_x64-setup.exe`). L'installeur n'a pas de signature de code
+Windows : au premier lancement, Windows peut afficher « Windows a protégé votre ordinateur » →
+« Informations complémentaires » → « Exécuter quand même ».
 
 ## Ce qu'elle nettoie
 
@@ -32,7 +38,7 @@ Le lien « Désinstaller des programmes », sous le bouton de l'accueil :
    Démarrer et du Bureau. « Sans risque » est coché, « à vérifier » jamais ; « Tout garder » ne
    supprime rien.
 4. **Bilan** — dossiers et raccourcis à la Corbeille ; chaque clé est exportée en .reg dans
-   `Documents\Nettoyeur\Sauvegardes\<date>` AVANT d'être supprimée (un double-clic la remet).
+   `Documents\Sayonara Uninstaller\Sauvegardes\<date>` AVANT d'être supprimée (un double-clic la remet).
 
 ## Garde-fous
 
@@ -49,17 +55,17 @@ Le lien « Désinstaller des programmes », sous le bouton de l'accueil :
   sont jamais fouillés.
 - Ce qui demande l'administrateur (Windows\Temp, mises à jour, Program Files, ProgramData, HKLM) :
   **une** demande d'autorisation (UAC), seulement s'il y a quelque chose à faire. Le plan est
-  déposé dans `%LOCALAPPDATA%\com.drrakendu78.nettoyeur\plan-admin.json` ; le programme relancé
+  déposé dans `%LOCALAPPDATA%\com.drrakendu78.sayonara\plan-admin.json` ; le programme relancé
   ne le lit que si son empreinte SHA-256 est celle reçue en argument, puis revérifie chaque élément.
 
 ## Mises à jour
 
 Au lancement, puis toutes les 30 minutes, l'appli lit `latest.json` sur les publications GitHub du dépôt
-(`https://github.com/drrakendu78/Nettoyeur/releases/latest/download/latest.json`). Si une version plus récente
+(`https://github.com/drrakendu78/Sayonara-Uninstaller/releases/latest/download/latest.json`). Si une version plus récente
 existe, une pastille « Mise à jour X » apparaît dans la barre de titre : un clic demande confirmation
 (« Installer et relancer ? »), le second télécharge l'installeur, vérifie sa signature avec la clé publique de
 `tauri.conf.json` (liée à la version annoncée : `requireSignedVersion`), puis l'installe avec sa barre de
-progression et relance le Nettoyeur. Jamais pendant une analyse, un nettoyage ou une désinstallation ; rien en
+progression et relance l'appli. Jamais pendant une analyse, un nettoyage ou une désinstallation ; rien en
 mode développement. Hors ligne, rien ne s'affiche.
 
 ## Publier une version
@@ -71,16 +77,16 @@ mode développement. Hors ligne, rien ne s'affiche.
 
 Le script refuse un dépôt non poussé, une signature qui ne correspond pas à la clé de l'appli ou à la version,
 un retour en arrière ; il publie en brouillon, ajoute `latest.json` en dernier, met en ligne, puis relit le tout
-par HTTPS. La clé privée est dans `~/.tauri/nettoyeur.key`, jamais dans le dépôt : **la sauvegarder**, la perdre
-rendrait impossible toute mise à jour des Nettoyeur déjà installés.
+par HTTPS. La clé privée est dans `~/.tauri/sayonara-uninstaller.key`, jamais dans le dépôt : **la sauvegarder**,
+la perdre rendrait impossible toute mise à jour des applis déjà installées.
 
 ## Développer
 
 ```
 cd src-tauri
-cargo test                                            # 43 tests, dont jonctions, clés, raccourcis, plan échangé et mises à jour
+cargo test                                            # 44 tests, dont jonctions, clés, raccourcis, plan échangé et mises à jour
 cargo test -- --ignored --nocapture analyse_reelle    # l'analyse sur la vraie machine, en lecture seule
-NETTOYEUR_PROGRAMME=Blender cargo test -- --ignored --nocapture restes_reels   # ses restes, en lecture seule
+SAYONARA_PROGRAMME=Blender cargo test -- --ignored --nocapture restes_reels   # ses restes, en lecture seule
 cargo tauri dev --no-dev-server
 ```
 

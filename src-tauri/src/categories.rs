@@ -29,7 +29,7 @@ pub const AGE_GROS: Duration = Duration::from_secs(365 * 24 * 3600);
 pub const TAILLE_GROS: u64 = 1 << 30;
 const EXT_INSTALL: [&str; 6] = ["exe", "msi", "msix", "msixbundle", "appx", "appxbundle"];
 
-/// Les seuls NOMS de dossier dans lesquels le Nettoyeur supprime quelque chose.
+/// Les seuls NOMS de dossier dans lesquels l'appli supprime quelque chose.
 const NOMS_SURS: [&str; 16] = [
     "temp",
     "download",

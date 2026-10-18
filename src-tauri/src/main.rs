@@ -9,7 +9,7 @@ fn main() {
     // déposé dans le dossier de l'appli — après avoir tout revérifié —, sans fenêtre, puis on sort.
     let args: Vec<String> = std::env::args().collect();
     if args.len() == 3 && args[1] == "--admin" {
-        std::process::exit(nettoyeur_lib::programme_eleve(&args[2]));
+        std::process::exit(sayonara_lib::programme_eleve(&args[2]));
     }
-    nettoyeur_lib::run()
+    sayonara_lib::run()
 }

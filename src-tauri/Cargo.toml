@@ -1,13 +1,13 @@
 [package]
-name = "nettoyeur"
+name = "sayonara-uninstaller"
 version = "0.1.0"
-description = "Nettoyeur — fait de la place sur le disque C:, sans jamais toucher aux photos, documents ni jeux"
+description = "Sayonara Uninstaller — désinstalle les programmes avec leurs restes et fait de la place sur le disque C:, sans jamais toucher aux photos, documents ni jeux"
 authors = ["Djamel Lazreg (drrakendu78)"]
 edition = "2021"
 license = "LicenseRef-PolyForm-Strict-1.0.0"
 
 [lib]
-name = "nettoyeur_lib"
+name = "sayonara_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
