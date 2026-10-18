@@ -1,16 +1,16 @@
 # Sayonara Uninstaller
 
 <p align="center">
-  <a href="https://github.com/drrakendu78/Sayonara-Uninstaller/blob/master/docs/sayonara-uninstaller.mp4">
+  <a href="https://github.com/drrakendu78/Sayonara-Uninstaller/raw/master/docs/sayonara-uninstaller.mp4">
     <img src="docs/apercu.webp" width="100%" alt="Sayonara Uninstaller en 36 secondes : l'analyse du disque, 91 Go à récupérer, puis la désinstallation de Snap Camera et de ses restes">
   </a>
   <br>
-  <a href="https://github.com/drrakendu78/Sayonara-Uninstaller/blob/master/docs/sayonara-uninstaller.mp4">▶ La vidéo de présentation, avec le son (36 s)</a>
+  <a href="https://github.com/drrakendu78/Sayonara-Uninstaller/raw/master/docs/sayonara-uninstaller.mp4">▶ La vidéo de présentation avec le son (MP4, 36 s)</a>
 </p>
 
 Petite appli grand public (Tauri 2) qui désinstalle les programmes avec ce qu'ils laissent derrière
 eux et fait de la place sur le disque **C:**, sans jamais toucher aux photos, aux documents ni aux
-jeux. Maquette : claude.ai/artifact/TJa7mqybpLY1iUbJiNohjh. (Son premier nom : « Nettoyeur ».)
+jeux.
 
 **Télécharger :** la dernière version est dans les
 [publications](https://github.com/drrakendu78/Sayonara-Uninstaller/releases/latest)
