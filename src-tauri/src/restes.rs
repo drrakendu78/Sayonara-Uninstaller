@@ -173,6 +173,15 @@ fn nom_voisin(cible: &Cible, nom: &str, installes: &[Programme]) -> bool {
     })
 }
 
+/// Le nom d'un programme ENCORE installé (« Stelliverse » quand on retire « Stelliverse Release »,
+/// « com.drrakendu78.stelliverse.beta »), ou celui de l'éditeur d'un programme installé (le dossier
+/// « Blender Foundation » d'une autre version de Blender) : c'est à lui, jamais un reste — même pas
+/// « à vérifier ». Ajout au portage : BCU les montrait avec un simple malus.
+fn nom_d_un_installe(nom: &str, installes: &[Programme]) -> bool {
+    let c = noms::compact(nom);
+    installes.iter().any(|p| (0..=1).contains(&noms::correspondance(&p.cible, nom)) || (c.chars().count() > 3 && noms::compact(&p.cible.editeur_court) == c))
+}
+
 fn fouiller(dossier: &Path, cible: &Cible, niveau: i32, connus: &[PathBuf], installes_dossiers: &[PathBuf], installes: &[Programme], sortie: &mut Vec<Reste>, programme: usize) -> Vec<PathBuf> {
     let mut trouves_ici = Vec::new();
     let parent_connu = est_connu(dossier, connus);
@@ -183,7 +192,9 @@ fn fouiller(dossier: &Path, cible: &Cible, niveau: i32, connus: &[PathBuf], inst
         }
         let nom = sous_d.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
         let mut nouveau: Option<Reste> = None;
-        if !est_connu(&sous_d, connus) {
+        // un dossier à un programme installé n'est pas proposé, mais on regarde dedans
+        // (« Snap\Snap Camera » quand « Snap » est encore là)
+        if !est_connu(&sous_d, connus) && !nom_d_un_installe(&nom, installes) {
             let mut r = noms::raisons_du_nom(cible, &nom, &nom_parent, niveau, parent_connu);
             if r.iter().any(|x| x.points() > 0) {
                 if noms::NOMS_DOUTEUX.contains(&nom.to_lowercase().as_str()) {
@@ -242,7 +253,7 @@ fn cles(cible: &Cible, dossier_installe: Option<&Path>, installes: &[Programme],
                     r.push(Raison::LienExplicite);
                 }
             }
-            if !r.is_empty() && registre::cle_supprimable(&chemin) {
+            if !r.is_empty() && registre::cle_supprimable(&chemin) && !nom_d_un_installe(&nom, installes) {
                 if nom_voisin(cible, &nom, installes) {
                     r.push(Raison::NomVoisin);
                 }
@@ -418,7 +429,7 @@ pub fn orphelins(installes: &[Programme]) -> Vec<Reste> {
 /// programme relancé en administrateur, qui ne fait confiance à personne).
 pub fn suppression_sure(genre: Genre, chemin: &str, installes: &[Programme]) -> bool {
     match genre {
-        Genre::Cle => registre::cle_supprimable(chemin),
+        Genre::Cle => registre::cle_supprimable(chemin) && !nom_d_un_installe(chemin.rsplit('\\').next().unwrap_or(""), installes),
         Genre::Raccourci => {
             let p = Path::new(chemin);
             p.is_absolute()
@@ -441,6 +452,7 @@ pub fn suppression_sure(genre: Genre, chemin: &str, installes: &[Programme]) -> 
                 && !est_connu(p, &connus)
                 && dans_une_racine
                 && !contient_une_installation(p, &dossiers_installes(installes))
+                && !p.file_name().map(|n| nom_d_un_installe(&n.to_string_lossy(), installes)).unwrap_or(true)
         }
     }
 }
@@ -502,6 +514,37 @@ mod tests {
         let r = f.iter().find(|r| r.chemin.eq_ignore_ascii_case(&reste.to_string_lossy())).unwrap();
         assert_eq!(r.niveau(), Niveau::Sur, "{:?}", r.raisons);
         assert_eq!(r.taille, 100);
+        let _ = fs::remove_dir_all(&racine);
+    }
+
+    /// Ce qui porte le nom d'un programme encore installé, ou celui de son éditeur, n'est jamais un
+    /// reste ; le dossier d'identifiant du programme retiré, si (vécu le 18/10 : la clé de
+    /// « Stelliverse » proposée au retrait de « Stelliverse Release », ses dossiers
+    /// com.drrakendu78.stelliverse.release manqués).
+    #[test]
+    fn les_noms_des_programmes_installes_sont_epargnes() {
+        let racine = std::env::temp_dir().join(format!("nettoyeur-ids-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&racine);
+        for d in ["com.drrakendu78.stelliverse.release", "com.drrakendu78.stelliverse", "com.drrakendu78.stelliverse.beta", "Stelliverse", "Blender Foundation"] {
+            fs::create_dir_all(racine.join(d)).unwrap();
+            fs::write(racine.join(d).join("x.json"), b"{}").unwrap();
+        }
+        let programme = |nom: &str, editeur: &str| Programme {
+            cle: format!("HKCU\\{nom}"), nom: nom.into(), editeur: editeur.into(), taille: None, date: None, dossier: None,
+            desinstaller: String::new(), icone_source: None, cible: cible(nom, editeur), nom_brut: nom.into(),
+        };
+        let installes = vec![programme("Stelliverse", "Drrakendu78"), programme("Stelliverse Beta", "Drrakendu78"), programme("Blender 4.2", "Blender Foundation")];
+        assert!(nom_d_un_installe("Stelliverse", &installes));
+        assert!(nom_d_un_installe("com.drrakendu78.stelliverse.beta", &installes));
+        assert!(nom_d_un_installe("Blender Foundation", &installes), "l'éditeur d'un programme installé");
+        assert!(!nom_d_un_installe("Stelliverse Release", &installes));
+        assert!(!nom_d_un_installe("com.drrakendu78.stelliverse.release", &installes));
+        let mut sortie = Vec::new();
+        fouiller(&racine, &cible("Stelliverse Release", "Drrakendu78"), 0, &[racine.clone()], &[], &installes, &mut sortie, 0);
+        let f = finaliser(sortie);
+        let noms: Vec<String> = f.iter().map(|r| Path::new(&r.chemin).file_name().unwrap().to_string_lossy().to_string()).collect();
+        assert_eq!(noms, ["com.drrakendu78.stelliverse.release"], "{:?}", f.iter().map(|r| (&r.chemin, &r.raisons)).collect::<Vec<_>>());
+        assert_eq!(f[0].niveau(), Niveau::Sur);
         let _ = fs::remove_dir_all(&racine);
     }
 

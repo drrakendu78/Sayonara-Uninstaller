@@ -145,9 +145,36 @@ pub struct Cible {
     pub editeur_court: String,
 }
 
+/// Les lettres et chiffres seuls, en minuscules : « Snap Camera » → « snapcamera ».
+pub fn compact(t: &str) -> String {
+    t.chars().filter(|c| c.is_alphanumeric()).collect::<String>().to_lowercase()
+}
+
+const PREFIXES_IDENTIFIANT: [&str; 10] = ["com", "org", "net", "io", "app", "dev", "fr", "de", "co", "me"];
+
+/// « com.drrakendu78.stelliverse.release » → (« drrakendu78 », « stelliverse release ») : les
+/// dossiers nommés d'après l'identifiant de l'appli (Tauri, Flutter, certaines applis Electron).
+/// Ajout au portage : BCU ne les reconnaît pas (pour lui, un point n'est pas un espace).
+pub fn identifiant(nom: &str) -> Option<(String, String)> {
+    let parts: Vec<&str> = nom.split('.').collect();
+    let valide = |p: &&str| !p.is_empty() && p.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_');
+    if parts.len() < 3 || !parts.iter().all(valide) || !PREFIXES_IDENTIFIANT.contains(&parts[0].to_ascii_lowercase().as_str()) {
+        return None;
+    }
+    Some((parts[1].to_ascii_lowercase(), parts[2..].join(" ").replace(['-', '_'], " ").to_ascii_lowercase()))
+}
+
 /// -1 : rien à voir ; 0 ou 1 : même nom ; plus haut : ressemblance de plus en plus lâche
 /// (MatchStringToProductName).
 pub fn correspondance(cible: &Cible, element: &str) -> i32 {
+    // un identifiant d'appli : seul son nom de produit compte, et il doit être LE nom
+    // (« com.drrakendu78.stelliverse.beta » n'est pas un reste de « Stelliverse »)
+    if let Some((_, produit_id)) = identifiant(element) {
+        return match correspondance(cible, &produit_id) {
+            m @ 0..=1 => m,
+            _ => -1,
+        };
+    }
     let produit = cible.nom_court.to_lowercase();
     let s = element.replace('_', " ").to_lowercase().trim().to_string();
     let plus_court = produit.chars().count().min(s.chars().count());
@@ -161,7 +188,6 @@ pub fn correspondance(cible: &Cible, element: &str) -> i32 {
     }
     // « SnapCamera », « Epic_Games-Launcher » : le même nom sans espaces ni séparateurs (ajout au
     // portage — BCU les manquait, son Sift4 à décalage 1 ne rattrape pas un espace en moins)
-    let compact = |t: &str| t.chars().filter(|c| c.is_alphanumeric()).collect::<String>();
     if compact(&produit).chars().count() > 4 && compact(&produit) == compact(&s) {
         return 1;
     }
@@ -274,6 +300,13 @@ pub fn raisons_du_nom(cible: &Cible, element: &str, nom_parent: &str, profondeur
             r.push(Raison::EditeurReconnu);
         }
     }
+    // « com.drrakendu78.… » quand l'éditeur est « Drrakendu78 » : l'identifiant le nomme
+    if let Some((vendeur, _)) = identifiant(element) {
+        let e = compact(&cible.editeur_court);
+        if e.chars().count() > 3 && compact(&vendeur) == e && !r.contains(&Raison::EditeurReconnu) {
+            r.push(Raison::EditeurReconnu);
+        }
+    }
     if parent_est_dossier_connu {
         r.push(Raison::DansDossierConnu);
     }
@@ -369,5 +402,24 @@ mod tests {
         assert_eq!(niveau(&[Raison::NomApproche, Raison::Profondeur(0)]), Niveau::Douteux);
         assert_eq!(niveau(&[Raison::NomApproche, Raison::Profondeur(2)]), Niveau::AVerifier);
         assert_eq!(niveau(&[Raison::NomIdentique, Raison::Profondeur(2), Raison::DossierEncoreUtilise]), Niveau::Douteux);
+    }
+
+    /// Les dossiers nommés d'après l'identifiant de l'appli (vécu le 18/10 : ceux de Stelliverse
+    /// Release passaient inaperçus).
+    #[test]
+    fn les_identifiants_d_appli_sont_reconnus() {
+        assert_eq!(identifiant("com.drrakendu78.stelliverse.release"), Some(("drrakendu78".into(), "stelliverse release".into())));
+        assert_eq!(identifiant("com.sehaz.bloom"), Some(("sehaz".into(), "bloom".into())));
+        assert_eq!(identifiant("Blender Foundation"), None);
+        assert_eq!(identifiant("1.2.3"), None);
+        assert_eq!(identifiant("com..bloom"), None);
+        let sr = cible("Stelliverse Release", "Drrakendu78");
+        assert_eq!(correspondance(&sr, "com.drrakendu78.stelliverse.release"), 0);
+        assert_eq!(correspondance(&sr, "com.drrakendu78.stelliverse.beta"), -1);
+        assert_eq!(correspondance(&sr, "com.drrakendu78.stelliverse"), -1);
+        assert_eq!(correspondance(&cible("bloom", "sehaz"), "com.sehaz.bloom"), 0);
+        let r = raisons_du_nom(&sr, "com.drrakendu78.stelliverse.release", "", 0, true);
+        assert!(r.contains(&Raison::EditeurReconnu) && r.contains(&Raison::NomIdentique), "{r:?}");
+        assert_eq!(niveau(&r), Niveau::Sur);
     }
 }
