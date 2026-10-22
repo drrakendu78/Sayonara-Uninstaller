@@ -117,9 +117,7 @@ h1, p { margin: 0; }
 .grand { min-width: 320px; height: 54px; padding: 0 30px; border-radius: 14px; font-size: 18px; box-shadow: 0 6px 18px rgba(0, 113, 227, 0.28); }
 /* la note et le lien vers les programmes : un seul bloc, pour tenir dans la fenêtre par défaut */
 .suite-accueil { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.liens-accueil { display: flex; align-items: center; gap: 6px; }
-.liens-accueil .point { color: var(--texte-2); }
-#vers-programmes, #vers-place { padding: 6px 4px; }
+#vers-programmes { padding: 6px 4px; }
 
 /* ── 2 · Résultats ── */
 .resultats { display: flex; flex-direction: column; gap: 16px; padding: 22px 40px 0; }
@@ -225,41 +223,6 @@ h1, p { margin: 0; }
 .reste .genre { font-size: 13px; color: var(--texte-2); }
 .reste .afficher { padding: 0 0 0 4px; }
 
-/* ── 8 · Où part la place : la carte du disque ── */
-.mesure-place { display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; padding: 6px 0 4px; }
-.ligne-mesure { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.ligne-mesure .lien { padding: 4px; }
-#etat-place { flex-shrink: 0; }
-.fil { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; flex-shrink: 0; font-size: 14px; margin: -6px 0 -4px; }
-.fil button { border: 0; background: none; padding: 4px 6px; border-radius: 6px; font: inherit; font-weight: 500; color: #0066CC; cursor: pointer; }
-@media (hover: hover) and (pointer: fine) { .fil button:hover { color: #004C99; background: rgba(0, 0, 0, 0.04); } }
-.fil .sep { color: var(--texte-2); padding: 0 2px; }
-.fil .ici { padding: 4px 6px; font-weight: 600; }
-.entree { display: grid; grid-template-columns: 40px minmax(0, 1fr) 90px auto; align-items: center; gap: 16px; min-height: 60px; padding: 8px 22px; }
-.entree > svg { justify-self: center; }
-.entree .nom { gap: 5px; }
-.entree .titre { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ouvrir {
-  border: 0; background: none; padding: 0; text-align: left; font: inherit; font-size: 16px; font-weight: 600; color: var(--texte);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: color 120ms ease;
-}
-@media (hover: hover) and (pointer: fine) { .ouvrir:hover { color: var(--accent); } }
-.ouvrir:focus-visible { border-radius: 6px; }
-.part { display: block; height: 4px; border-radius: 999px; background: var(--piste); overflow: hidden; max-width: 420px; }
-.part > span { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 999px; }
-.entree .actions { display: flex; align-items: center; justify-content: flex-end; gap: 14px; min-width: 56px; }
-/* « Libérer » : orange comme « à vérifier » ; au 2e temps (confirmer), plein, texte blanc */
-.liberer {
-  border: 0; background: var(--verif-fond); color: var(--verif-texte); font: inherit; font-size: 13px; font-weight: 600;
-  padding: 5px 12px; border-radius: 999px; white-space: nowrap; cursor: pointer;
-  transition: background-color 150ms ease, color 150ms ease, transform 120ms var(--sortie);
-}
-.liberer:active:not(:disabled) { transform: scale(0.97); }
-.liberer.confirmer { background: #B4501E; color: #FFFFFF; }
-.liberer:disabled { cursor: progress; opacity: 0.7; }
-.liberer:focus-visible { outline-offset: 2px; }
-.autres { padding: 14px 22px 14px 78px; font-size: 13px; color: var(--texte-2); }
-
 /* moins de mouvement : ni fondu, ni anneau qui se remplit, ni roue qui tourne */
 @media (prefers-reduced-motion: reduce) {
   .ecran { animation: none; }
@@ -267,7 +230,7 @@ h1, p { margin: 0; }
   .roue { animation: none; border-top-color: rgba(255, 255, 255, 0.35); border-right-color: #FFFFFF; }
   .mini-roue { animation: none; }
   .barre-prog > div { transition: none; }
-  .principal, .maj, .liberer, .ouvrir { transition: none; }
-  .principal:active:not(:disabled), .maj:active:not(:disabled), .liberer:active:not(:disabled) { transform: none; }
+  .principal, .maj { transition: none; }
+  .principal:active:not(:disabled), .maj:active:not(:disabled) { transform: none; }
   .maj { animation: none; }
 }

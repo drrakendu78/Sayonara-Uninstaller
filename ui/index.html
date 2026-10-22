@@ -54,11 +54,7 @@
       </button>
       <div class="suite-accueil">
         <div class="note" id="note-accueil" role="status">Rien n’est supprimé sans votre accord.</div>
-        <div class="liens-accueil">
-          <button type="button" class="lien" id="vers-programmes">Désinstaller des programmes</button>
-          <span class="point" aria-hidden="true">·</span>
-          <button type="button" class="lien" id="vers-place">Où part ma place ?</button>
-        </div>
+        <button type="button" class="lien" id="vers-programmes">Désinstaller des programmes</button>
       </div>
     </div>
   </main>
@@ -268,29 +264,6 @@
     </div>
   </main>
 
-  <!-- 8 · OÙ PART LA PLACE : tout le disque, du plus gros au plus petit -->
-  <main class="ecran resultats" id="place" hidden>
-    <div class="entete">
-      <div class="titres">
-        <h1 tabindex="-1" id="titre-place">Où part la place</h1>
-        <p id="sous-titre-place">Tout le disque C:, du plus gros au plus petit. Rien n’est supprimé d’ici sans votre clic.</p>
-      </div>
-      <div class="outils-entete">
-        <button type="button" class="lien" id="remesurer" hidden>Mesurer à nouveau</button>
-        <button type="button" class="lien" id="retour-place">Retour</button>
-      </div>
-    </div>
-    <div class="mesure-place" id="mesure-place" hidden>
-      <div class="barre-prog" aria-hidden="true"><div id="barre-place"></div></div>
-      <div class="ligne-mesure">
-        <span class="note" id="note-place" role="status">Lecture du disque…</span>
-        <button type="button" class="lien" id="arreter-place">Arrêter</button>
-      </div>
-    </div>
-    <nav class="fil" id="fil-place" aria-label="Dossier affiché" hidden></nav>
-    <div class="note" id="etat-place" role="status" hidden></div>
-    <ul class="carte liste" id="liste-place" aria-label="Contenu du dossier" hidden></ul>
-  </main>
 </div>
 </body>
 </html>

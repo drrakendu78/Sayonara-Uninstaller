@@ -6,7 +6,6 @@
 // d'une catégorie, programmes, restes). Aucun chemin ne vient jamais de l'interface.
 
 mod admin;
-mod carte;
 mod categories;
 mod desinstallation;
 mod dev;
@@ -59,8 +58,6 @@ struct Etat {
     programmes: Mutex<Vec<Programme>>,
     retires: Mutex<Vec<RetireInfo>>,
     restes: Mutex<Vec<Reste>>,
-    /// « Où part ma place » : tout le disque, mesuré une fois
-    carte: Mutex<Option<carte::Carte>>,
 }
 
 fn verrou<T>(m: &Mutex<T>) -> Result<std::sync::MutexGuard<'_, T>, String> {
@@ -343,64 +340,6 @@ fn affichage_dossier(p: &Path) -> String {
     restes::affichage(&Reste { genre: Genre::Dossier, chemin: p.to_string_lossy().to_string(), raisons: vec![], taille: 0, nombre: 0, programme: None })
 }
 
-/* ── Où part ma place : tout le disque, parcouru dossier par dossier ── */
-
-#[tauri::command]
-async fn carte_mesurer(app: AppHandle, etat: State<'_, Etat>) -> Result<carte::Niveau, String> {
-    let c = tauri::async_runtime::spawn_blocking(move || {
-        carte::mesurer(&systeme::disque_systeme(), |lus, total| {
-            let _ = app.emit("carte-progression", serde_json::json!({ "lus": lus, "total": total }));
-        })
-    })
-    .await
-    .map_err(|_| "La mesure s'est arrêtée".to_string())?;
-    let niveau = c.niveau(0).ok_or("Le disque n'a pas pu être lu")?;
-    *verrou(&etat.carte)? = Some(c);
-    Ok(niveau)
-}
-
-#[tauri::command]
-fn carte_annuler() {
-    carte::ANNULER.store(true, std::sync::atomic::Ordering::SeqCst);
-}
-
-#[tauri::command]
-fn carte_niveau(index: usize, etat: State<'_, Etat>) -> Result<carte::Niveau, String> {
-    let garde = verrou(&etat.carte)?;
-    garde.as_ref().ok_or("Mesurez d'abord le disque")?.niveau(index).ok_or_else(|| "Dossier introuvable".to_string())
-}
-
-#[tauri::command]
-fn carte_montrer(index: usize, etat: State<'_, Etat>) -> Result<(), String> {
-    let garde = verrou(&etat.carte)?;
-    let chemin = garde.as_ref().ok_or("Mesurez d'abord le disque")?.chemin_a_montrer(index).ok_or("Élément introuvable")?;
-    if !chemin.exists() || !systeme::montrer_dans_explorateur(&chemin) {
-        return Err("Élément introuvable".into());
-    }
-    Ok(())
-}
-
-#[derive(Serialize)]
-struct Libere {
-    octets: u64,
-    niveau: carte::Niveau,
-}
-
-#[tauri::command]
-async fn carte_liberer(index: usize, etat: State<'_, Etat>) -> Result<Libere, String> {
-    // la carte sort de l'état le temps de la suppression (elle peut durer), puis y revient
-    let mut c = verrou(&etat.carte)?.take().ok_or("Mesurez d'abord le disque")?;
-    let (c, resultat) = tauri::async_runtime::spawn_blocking(move || {
-        let r = c.liberer(index);
-        (c, r)
-    })
-    .await
-    .map_err(|_| "La suppression s'est arrêtée".to_string())?;
-    let reponse = resultat.and_then(|(octets, parent)| c.niveau(parent).map(|niveau| Libere { octets, niveau }).ok_or_else(|| "Dossier introuvable".to_string()));
-    *verrou(&etat.carte)? = Some(c);
-    reponse
-}
-
 /* ── Programmes : désinstaller, puis retirer ce qu'ils ont laissé ── */
 
 #[derive(Serialize)]
@@ -627,11 +566,6 @@ pub fn run() {
             chercher_restes,
             montrer_reste,
             supprimer_restes,
-            carte_mesurer,
-            carte_annuler,
-            carte_niveau,
-            carte_montrer,
-            carte_liberer,
             maj::maj_verifier,
             maj::maj_installer
         ])

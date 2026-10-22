@@ -82,11 +82,6 @@ fn zone_interdite(p: &Path) -> bool {
     ["\\windows\\", "\\program files", "\\programdata\\", "\\appdata\\"].iter().any(|z| t.contains(z))
 }
 
-/// Hors des zones interdites (pour la carte, qui voit tout le disque).
-pub fn autorise(p: &Path) -> bool {
-    p.is_absolute() && systeme::sur_disque_systeme(p) && !zone_interdite(p)
-}
-
 /// Le dossier est-il un dossier de développement, avec son projet à côté ? Rien ne le crée ni ne
 /// le suit : on lit seulement.
 pub fn genre_de(p: &Path) -> Option<Genre> {

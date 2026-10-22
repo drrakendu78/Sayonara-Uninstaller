@@ -58,7 +58,7 @@
   $('#fermer').addEventListener('click', () => fenetre.close());
 
   /* ── écrans ── */
-  const ECRANS = ['accueil', 'resultats', 'termine', 'programmes', 'desinstallation', 'restes', 'termine-programmes', 'place'];
+  const ECRANS = ['accueil', 'resultats', 'termine', 'programmes', 'desinstallation', 'restes', 'termine-programmes'];
   const PIEDS = { resultats: '#pied', programmes: '#pied-programmes', restes: '#pied-restes' };
   function afficher(nom) {
     for (const id of ECRANS) $('#' + id).hidden = id !== nom;
@@ -574,208 +574,6 @@
   }
   $('#fini-programmes').addEventListener('click', () => { afficher('accueil'); disque(); });
 
-  /* ── 8 · Où part la place : tout le disque, du plus gros au plus petit (carte.rs). On montre
-     tout ; on ne libère que ce qui se refait tout seul (dossiers de développement, caches), en deux
-     clics. Le front ne connaît que des numéros de nœud. ── */
-  const PLACE = { mesure: false, abandon: false, niveau: null, ecoute: null, confirmer: null };
-  const DESSINS_PLACE = {
-    dossier: ['M3.5 6.5 H9.5 L11.5 8.5 H20.5 V18.5 H3.5 Z'],
-    fichier: ['M6 3.5 H14 L19 8.5 V20.5 H6 Z', 'M14 3.5 V8.5 H19'],
-    fichiers: ['M8 3.5 H15 L18.5 7 V17.5 H8 Z', 'M5.5 6.5 V20.5 H15.5'],
-    illisible: ['M6 10.5 H18 V20 H6 Z', 'M8.5 10.5 V7.5 A3.5 3.5 0 0 1 15.5 7.5 V10.5'],
-    systeme: ['M4 5 H20 V15 H4 Z', 'M9 19.5 H15', 'M12 15 V19.5']
-  };
-  const DESC_PLACE = {
-    fichiers: 'Les fichiers posés directement ici',
-    systeme: 'Fichiers de Windows, points de restauration, zones protégées',
-    illisible: 'Windows ne laisse pas lire ce dossier'
-  };
-  const etatPlace = (texte, alerte) => { const e = $('#etat-place'); e.hidden = !texte; e.classList.toggle('alerte', !!alerte); e.textContent = texte || ''; };
-
-  async function ouvrirPlace() {
-    afficher('place');
-    if (PLACE.niveau) { rendrePlace(PLACE.niveau); return; }
-    mesurerPlace();
-  }
-
-  async function mesurerPlace() {
-    if (PLACE.mesure) return;
-    PLACE.niveau = null;
-    PLACE.abandon = false;
-    ['#liste-place', '#fil-place', '#remesurer'].forEach((s) => { $(s).hidden = true; });
-    etatPlace('');
-    $('#mesure-place').hidden = false;
-    $('#barre-place').style.width = '0%';
-    $('#note-place').textContent = 'Lecture du disque…';
-    $('#arreter-place').disabled = false;
-    $('#titre-place').textContent = 'Où part la place';
-    $('#sous-titre-place').textContent = 'Tout le disque C:, du plus gros au plus petit. Rien n’est supprimé d’ici sans votre clic.';
-    if (!PLACE.ecoute) {
-      PLACE.ecoute = await T.event.listen('carte-progression', (e) => {
-        const p = e.payload || {};
-        if (!p.total) return;
-        $('#barre-place').style.width = Math.min(99, (p.lus / p.total) * 100).toFixed(1) + '%';
-        $('#note-place').textContent = 'Lecture du disque… ' + taille(p.lus, true) + ' sur environ ' + taille(p.total, true);
-      });
-    }
-    PLACE.mesure = true;
-    try {
-      const n = await invoke('carte_mesurer');
-      // « Retour » pendant la mesure : une carte arrêtée en route n'est pas gardée
-      if (!PLACE.abandon) rendrePlace(n);
-    } catch (e) {
-      etatPlace('Le disque n’a pas pu être mesuré : ' + message(e), true);
-    } finally {
-      PLACE.mesure = false;
-      $('#mesure-place').hidden = true;
-      $('#remesurer').hidden = false;
-    }
-  }
-
-  async function allerPlace(index) {
-    try {
-      rendrePlace(await invoke('carte_niveau', { index }));
-      etatPlace('');
-      $('#liste-place').scrollTop = 0;
-    } catch (e) {
-      etatPlace(message(e), true);
-    }
-  }
-
-  function rendrePlace(n) {
-    PLACE.niveau = n;
-    annulerConfirmations();
-    // le fil : du disque jusqu'au dossier affiché, chaque étape cliquable
-    const morceaux = [];
-    n.fil.forEach(([index, nom], i) => {
-      const libelle = i === 0 ? 'Disque ' + nom : nom;
-      if (i > 0) morceaux.push(element('span', 'sep', '›'));
-      if (i === n.fil.length - 1) {
-        const s = element('span', 'ici', libelle);
-        s.setAttribute('aria-current', 'page');
-        morceaux.push(s);
-      } else {
-        const b = element('button', '', libelle);
-        b.type = 'button';
-        b.addEventListener('click', () => allerPlace(index));
-        morceaux.push(b);
-      }
-    });
-    $('#fil-place').replaceChildren(...morceaux);
-    $('#fil-place').hidden = false;
-    const racine = n.fil.length === 1;
-    $('#titre-place').textContent = racine ? 'Où part la place' : n.fil[n.fil.length - 1][1];
-    $('#sous-titre-place').textContent = racine
-      ? taille(n.utilise, true) + ' utilisés sur C:' + (n.partielle ? ' — mesure arrêtée en route : les tailles sont incomplètes.' : ', du plus gros au plus petit. Rien n’est supprimé d’ici sans votre clic.')
-      : taille(n.taille) + ' dans ce dossier';
-    const base = Math.max(1, n.taille, ...n.entrees.map((e) => e.taille));
-    const lignes = n.entrees.map((e) => lignePlace(e, base));
-    if (n.nb_autres > 0) {
-      const li = element('li', 'ligne');
-      li.append(element('div', 'autres', 'et ' + pluriel(n.nb_autres, 'autre élément', 'autres éléments') + ' · ' + taille(n.autres)));
-      lignes.push(li);
-    }
-    if (!lignes.length) {
-      const li = element('li', 'ligne');
-      li.append(element('div', 'autres', 'Ce dossier est vide.'));
-      lignes.push(li);
-    }
-    $('#liste-place').replaceChildren(...lignes);
-    $('#liste-place').hidden = false;
-  }
-
-  function lignePlace(e, base) {
-    const li = element('li', 'ligne');
-    const rang = element('div', 'entree');
-    const nom = element('span', 'nom');
-    let titre;
-    if (e.ouvrable) {
-      titre = element('button', 'ouvrir', e.nom);
-      titre.type = 'button';
-      titre.setAttribute('aria-label', 'Ouvrir ' + e.nom + ' (' + taille(e.taille) + ')');
-      titre.addEventListener('click', () => allerPlace(e.index));
-    } else {
-      titre = element('span', 'titre', e.nom);
-    }
-    titre.title = e.nom;
-    nom.append(titre);
-    if (DESC_PLACE[e.genre]) nom.append(element('span', 'desc', DESC_PLACE[e.genre]));
-    // la part du dossier affiché : une barre, pas un camembert
-    const part = element('span', 'part');
-    const plein = element('span');
-    plein.style.width = (e.taille > 0 ? Math.max(0.8, (e.taille / base) * 100) : 0).toFixed(1) + '%';
-    part.append(plein);
-    nom.append(part);
-    const actions = element('span', 'actions');
-    if (e.liberer) actions.append(boutonLiberer(e));
-    if (['dossier', 'fichier', 'illisible'].includes(e.genre)) {
-      const voir = element('button', 'afficher', 'Afficher');
-      voir.type = 'button';
-      voir.setAttribute('aria-label', 'Afficher ' + e.nom + ' dans l’Explorateur');
-      voir.addEventListener('click', () => invoke('carte_montrer', { index: e.index }).catch(() => {}));
-      actions.append(voir);
-    }
-    rang.append(dessin(26, DESSINS_PLACE[e.genre] || DESSINS_PLACE.dossier, '#515154', 1.8), nom,
-      element('span', 'taille', e.genre === 'illisible' && !e.taille ? '—' : taille(e.taille)), actions);
-    li.append(rang);
-    return li;
-  }
-
-  // « Libérer » (un dossier de développement, pour de bon) ou « Vider » (un cache, sauf le récent) :
-  // un oui en deux temps, comme la mise à jour — rien ne part sur un clic égaré
-  function boutonLiberer(e) {
-    const dev = e.liberer === 'dev';
-    const b = element('button', 'liberer', dev ? 'Libérer' : 'Vider');
-    b.type = 'button';
-    b.dataset.libelle = b.textContent;
-    b.title = dev ? 'Dossier de développement : supprimé pour de bon, la prochaine compilation le refait'
-      : 'Cache : on retire ce qui n’a pas servi depuis 24 h';
-    b.addEventListener('click', async () => {
-      if (b.disabled) return;
-      if (!b.classList.contains('confirmer')) {
-        annulerConfirmations();
-        b.classList.add('confirmer');
-        b.textContent = dev ? 'Supprimer pour de bon ?' : 'Vider l’ancien ?';
-        PLACE.confirmer = setTimeout(annulerConfirmations, 4000);
-        return;
-      }
-      clearTimeout(PLACE.confirmer);
-      PLACE.confirmer = null;
-      b.disabled = true;
-      b.setAttribute('aria-busy', 'true');
-      b.textContent = dev ? 'Suppression…' : 'Nettoyage…';
-      try {
-        const r = await invoke('carte_liberer', { index: e.index });
-        rendrePlace(r.niveau);
-        etatPlace(r.octets > 0 ? e.nom + ' : ' + taille(r.octets) + ' libérés.' : e.nom + ' : rien n’a pu partir (fichiers récents ou ouverts par un programme).');
-      } catch (err) {
-        etatPlace(message(err), true);
-        b.disabled = false;
-        b.removeAttribute('aria-busy');
-        b.classList.remove('confirmer');
-        b.textContent = b.dataset.libelle;
-      }
-    });
-    return b;
-  }
-  function annulerConfirmations() {
-    if (PLACE.confirmer) { clearTimeout(PLACE.confirmer); PLACE.confirmer = null; }
-    document.querySelectorAll('#liste-place .liberer.confirmer').forEach((b) => { b.classList.remove('confirmer'); b.textContent = b.dataset.libelle; });
-  }
-
-  $('#vers-place').addEventListener('click', ouvrirPlace);
-  $('#remesurer').addEventListener('click', mesurerPlace);
-  $('#arreter-place').addEventListener('click', () => {
-    $('#arreter-place').disabled = true;
-    $('#note-place').textContent = 'Arrêt de la lecture…';
-    invoke('carte_annuler').catch(() => {});
-  });
-  $('#retour-place').addEventListener('click', () => {
-    if (PLACE.mesure) { PLACE.abandon = true; invoke('carte_annuler').catch(() => {}); }
-    afficher('accueil');
-    disque();
-  });
-
   /* ── Mise à jour (maj.rs), reprise d'Atreia Hub : cherchée 2 s après le lancement, toutes les
      30 min, et au retour sur l'appli si la dernière recherche a plus de 5 min. Une pastille dans
      la barre de titre ; l'appli se ferme pour s'installer, donc on le demande une fois, sur la
@@ -784,7 +582,7 @@
   const MAJ = { etat: 'rien', version: '', erreur: '', recu: 0, total: 0, phase: '', a: 0, confirmer: null, attente: false };
   let recherche = false;
   // une analyse, un nettoyage, une désinstallation ou une suppression en cours : on ne ferme pas l'appli dessous
-  const occupee = () => !$('#desinstallation').hidden || !!document.querySelector('.principal[aria-busy="true"], .liberer[aria-busy="true"]') || PLACE.mesure;
+  const occupee = () => !$('#desinstallation').hidden || !!document.querySelector('.principal[aria-busy="true"]');
 
   function peindreMaj() {
     const montre = MAJ.etat === 'dispo' || MAJ.etat === 'installe';
