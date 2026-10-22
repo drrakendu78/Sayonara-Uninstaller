@@ -18,7 +18,7 @@ use walkdir::WalkDir;
 
 use crate::systeme;
 
-pub const IDS: [&str; 8] = ["temp", "corbeille", "maj", "nav", "jeux", "install", "gros", "orphelins"];
+pub const IDS: [&str; 9] = ["temp", "corbeille", "maj", "nav", "jeux", "install", "gros", "orphelins", "dev"];
 
 /// Un fichier modifié (ou créé) depuis moins de 24 h n'est jamais touché.
 pub const RECENT: Duration = Duration::from_secs(24 * 3600);

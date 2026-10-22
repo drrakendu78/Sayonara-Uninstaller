@@ -6,8 +6,10 @@
 // d'une catégorie, programmes, restes). Aucun chemin ne vient jamais de l'interface.
 
 mod admin;
+mod carte;
 mod categories;
 mod desinstallation;
+mod dev;
 mod icones;
 mod maj;
 mod nettoyage;
@@ -37,6 +39,8 @@ struct Analyse {
     install: Vec<Fichier>,
     gros: Vec<Fichier>,
     orphelins: Vec<Reste>,
+    /// les dossiers de développement (target, node_modules), du plus gros au plus petit
+    dev: Vec<dev::Dossier>,
     /// octets mesurés dans les dossiers qui demandent l'administrateur, par catégorie
     admin_temp: u64,
     admin_maj: u64,
@@ -55,6 +59,8 @@ struct Etat {
     programmes: Mutex<Vec<Programme>>,
     retires: Mutex<Vec<RetireInfo>>,
     restes: Mutex<Vec<Reste>>,
+    /// « Où part ma place » : tout le disque, mesuré une fois
+    carte: Mutex<Option<carte::Carte>>,
 }
 
 fn verrou<T>(m: &Mutex<T>) -> Result<std::sync::MutexGuard<'_, T>, String> {
@@ -93,6 +99,8 @@ struct Bilan {
     total: u64,
     /// octets envoyés à la Corbeille (les « à vérifier ») : pas encore libérés
     vers_corbeille: u64,
+    /// octets supprimés pour de bon (les dossiers de développement : ils se refont tout seuls)
+    definitif: u64,
     /// l'utilisateur a refusé l'autorisation administrateur
     admin_refuse: bool,
 }
@@ -139,6 +147,10 @@ fn analyse_complete(etape: impl Fn(&'static str)) -> (Vec<Resume>, Analyse) {
                 let liste = if id == "install" { &analyse.install } else { &analyse.gros };
                 Mesure { taille: liste.iter().map(|f| f.taille).sum(), nombre: liste.len() as u64 }
             }
+            "dev" => {
+                analyse.dev = dev::chercher();
+                Mesure { taille: analyse.dev.iter().map(|d| d.taille).sum(), nombre: analyse.dev.iter().map(|d| d.nombre).sum() }
+            }
             "orphelins" => {
                 analyse.orphelins = restes::orphelins(&programmes::lister());
                 Mesure { taille: analyse.orphelins.iter().map(|r| r.taille).sum(), nombre: analyse.orphelins.len() as u64 }
@@ -181,6 +193,20 @@ fn lister(id: String, etat: State<'_, Etat>) -> Result<Vec<Ligne>, String> {
                 })
                 .collect());
         }
+        "dev" => {
+            return Ok(analyse
+                .dev
+                .iter()
+                .enumerate()
+                .map(|(index, d)| Ligne {
+                    index,
+                    nom: affichage_dossier(&d.chemin),
+                    lieu: None,
+                    taille: d.taille,
+                    jours: maintenant.duration_since(d.derniere).map(|x| x.as_secs() / 86_400).unwrap_or(0),
+                })
+                .collect());
+        }
         _ => return Err("Catégorie inconnue".into()),
     };
     Ok(fichiers
@@ -206,6 +232,7 @@ fn montrer(id: String, index: usize, etat: State<'_, Etat>) -> Result<(), String
         "install" => analyse.install.get(index).map(|f| f.chemin.clone()),
         "gros" => analyse.gros.get(index).map(|f| f.chemin.clone()),
         "orphelins" => analyse.orphelins.get(index).map(|r| PathBuf::from(&r.chemin)),
+        "dev" => analyse.dev.get(index).map(|d| d.chemin.clone()),
         _ => None,
     }
     .ok_or("Élément introuvable")?;
@@ -231,7 +258,7 @@ fn encore_valables(liste: &[Fichier], id: &str) -> Vec<(PathBuf, u64)> {
 }
 
 #[tauri::command]
-async fn nettoyer(ids: Vec<String>, etat: State<'_, Etat>) -> Result<Bilan, String> {
+async fn nettoyer(ids: Vec<String>, dev: Option<Vec<usize>>, etat: State<'_, Etat>) -> Result<Bilan, String> {
     if ids.is_empty() || ids.iter().any(|i| !categories::connu(i)) {
         return Err("Catégorie inconnue".into());
     }
@@ -240,6 +267,15 @@ async fn nettoyer(ids: Vec<String>, etat: State<'_, Etat>) -> Result<Bilan, Stri
     let veut = |id: &str| ids.iter().any(|i| i == id);
     let (temp, corbeille, maj, nav, jeux, install, gros, orphelins) =
         (veut("temp"), veut("corbeille"), veut("maj"), veut("nav"), veut("jeux"), veut("install"), veut("gros"), veut("orphelins"));
+    // les dossiers de développement choisis un par un dans la liste (tous si l'interface n'a rien précisé)
+    let dossiers_dev: Vec<dev::Dossier> = if veut("dev") {
+        match &dev {
+            Some(choix) => choix.iter().filter_map(|&i| analyse.dev.get(i).cloned()).collect(),
+            None => analyse.dev.clone(),
+        }
+    } else {
+        Vec::new()
+    };
 
     tauri::async_runtime::spawn_blocking(move || {
         let c = systeme::disque_systeme();
@@ -292,11 +328,77 @@ async fn nettoyer(ids: Vec<String>, etat: State<'_, Etat>) -> Result<Bilan, Stri
         }
         let vers_corbeille = a_envoyer.iter().chain(admin_dossiers.iter()).filter(|(p, _)| !p.exists()).map(|(_, t)| t).sum();
 
+        // 5. les dossiers de développement : pour de bon, chacun revérifié juste avant
+        let definitif = dossiers_dev.iter().map(dev::supprimer).sum();
+
         let apres = systeme::espace(&c).ok_or("Impossible de lire le disque C:")?;
-        Ok(Bilan { avant: avant.libre, apres: apres.libre, total: apres.total, vers_corbeille, admin_refuse })
+        Ok(Bilan { avant: avant.libre, apres: apres.libre, total: apres.total, vers_corbeille, definitif, admin_refuse })
     })
     .await
     .map_err(|_| "Le nettoyage s'est arrêté".to_string())?
+}
+
+/// Un dossier comme on le montre : depuis le profil (« Documents\… »), sinon depuis la racine du disque.
+fn affichage_dossier(p: &Path) -> String {
+    restes::affichage(&Reste { genre: Genre::Dossier, chemin: p.to_string_lossy().to_string(), raisons: vec![], taille: 0, nombre: 0, programme: None })
+}
+
+/* ── Où part ma place : tout le disque, parcouru dossier par dossier ── */
+
+#[tauri::command]
+async fn carte_mesurer(app: AppHandle, etat: State<'_, Etat>) -> Result<carte::Niveau, String> {
+    let c = tauri::async_runtime::spawn_blocking(move || {
+        carte::mesurer(&systeme::disque_systeme(), |lus, total| {
+            let _ = app.emit("carte-progression", serde_json::json!({ "lus": lus, "total": total }));
+        })
+    })
+    .await
+    .map_err(|_| "La mesure s'est arrêtée".to_string())?;
+    let niveau = c.niveau(0).ok_or("Le disque n'a pas pu être lu")?;
+    *verrou(&etat.carte)? = Some(c);
+    Ok(niveau)
+}
+
+#[tauri::command]
+fn carte_annuler() {
+    carte::ANNULER.store(true, std::sync::atomic::Ordering::SeqCst);
+}
+
+#[tauri::command]
+fn carte_niveau(index: usize, etat: State<'_, Etat>) -> Result<carte::Niveau, String> {
+    let garde = verrou(&etat.carte)?;
+    garde.as_ref().ok_or("Mesurez d'abord le disque")?.niveau(index).ok_or_else(|| "Dossier introuvable".to_string())
+}
+
+#[tauri::command]
+fn carte_montrer(index: usize, etat: State<'_, Etat>) -> Result<(), String> {
+    let garde = verrou(&etat.carte)?;
+    let chemin = garde.as_ref().ok_or("Mesurez d'abord le disque")?.chemin_a_montrer(index).ok_or("Élément introuvable")?;
+    if !chemin.exists() || !systeme::montrer_dans_explorateur(&chemin) {
+        return Err("Élément introuvable".into());
+    }
+    Ok(())
+}
+
+#[derive(Serialize)]
+struct Libere {
+    octets: u64,
+    niveau: carte::Niveau,
+}
+
+#[tauri::command]
+async fn carte_liberer(index: usize, etat: State<'_, Etat>) -> Result<Libere, String> {
+    // la carte sort de l'état le temps de la suppression (elle peut durer), puis y revient
+    let mut c = verrou(&etat.carte)?.take().ok_or("Mesurez d'abord le disque")?;
+    let (c, resultat) = tauri::async_runtime::spawn_blocking(move || {
+        let r = c.liberer(index);
+        (c, r)
+    })
+    .await
+    .map_err(|_| "La suppression s'est arrêtée".to_string())?;
+    let reponse = resultat.and_then(|(octets, parent)| c.niveau(parent).map(|niveau| Libere { octets, niveau }).ok_or_else(|| "Dossier introuvable".to_string()));
+    *verrou(&etat.carte)? = Some(c);
+    reponse
 }
 
 /* ── Programmes : désinstaller, puis retirer ce qu'ils ont laissé ── */
@@ -525,6 +627,11 @@ pub fn run() {
             chercher_restes,
             montrer_reste,
             supprimer_restes,
+            carte_mesurer,
+            carte_annuler,
+            carte_niveau,
+            carte_montrer,
+            carte_liberer,
             maj::maj_verifier,
             maj::maj_installer
         ])

@@ -54,7 +54,11 @@
       </button>
       <div class="suite-accueil">
         <div class="note" id="note-accueil" role="status">Rien n’est supprimé sans votre accord.</div>
-        <button type="button" class="lien" id="vers-programmes">Désinstaller des programmes</button>
+        <div class="liens-accueil">
+          <button type="button" class="lien" id="vers-programmes">Désinstaller des programmes</button>
+          <span class="point" aria-hidden="true">·</span>
+          <button type="button" class="lien" id="vers-place">Où part ma place ?</button>
+        </div>
       </div>
     </div>
   </main>
@@ -144,6 +148,16 @@
         </label>
         <div class="detail" hidden></div>
       </li>
+      <li class="ligne" data-id="dev">
+        <label class="rang" for="c-dev">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#515154" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 7 L3.5 12 L8.5 17"/><path d="M15.5 7 L20.5 12 L15.5 17"/><path d="M13.5 5 L10.5 19"/></svg>
+          <span class="nom"><span class="titre">Dossiers de développement</span><span class="desc">target, node_modules — refaits à la prochaine compilation, vous choisissez lesquels</span></span>
+          <span class="pastille verifier">À vérifier</span>
+          <span class="taille">—</span>
+          <input id="c-dev" type="checkbox" aria-label="Supprimer les dossiers de développement choisis">
+        </label>
+        <div class="detail" hidden></div>
+      </li>
     </ul>
   </main>
   <footer class="pied" id="pied" hidden>
@@ -169,6 +183,7 @@
       </div>
       <button type="button" class="principal" id="fini">Terminé</button>
       <div class="note" id="note-corbeille">Les fichiers « à vérifier » restent dans la Corbeille tant que vous ne la videz pas.</div>
+      <div class="note" id="note-dev" hidden>Les dossiers de développement sont supprimés pour de bon : ils se refont à la prochaine compilation.</div>
       <div class="note alerte" id="note-admin" hidden>Les restes des mises à jour n’ont pas été nettoyés : l’autorisation a été refusée.</div>
     </div>
   </main>
@@ -251,6 +266,30 @@
       <div class="note" id="note-sauvegarde">Les dossiers restent dans la Corbeille tant que vous ne la videz pas.</div>
       <div class="note alerte" id="note-admin-restes" hidden>Une partie des restes n’a pas été retirée : l’autorisation a été refusée.</div>
     </div>
+  </main>
+
+  <!-- 8 · OÙ PART LA PLACE : tout le disque, du plus gros au plus petit -->
+  <main class="ecran resultats" id="place" hidden>
+    <div class="entete">
+      <div class="titres">
+        <h1 tabindex="-1" id="titre-place">Où part la place</h1>
+        <p id="sous-titre-place">Tout le disque C:, du plus gros au plus petit. Rien n’est supprimé d’ici sans votre clic.</p>
+      </div>
+      <div class="outils-entete">
+        <button type="button" class="lien" id="remesurer" hidden>Mesurer à nouveau</button>
+        <button type="button" class="lien" id="retour-place">Retour</button>
+      </div>
+    </div>
+    <div class="mesure-place" id="mesure-place" hidden>
+      <div class="barre-prog" aria-hidden="true"><div id="barre-place"></div></div>
+      <div class="ligne-mesure">
+        <span class="note" id="note-place" role="status">Lecture du disque…</span>
+        <button type="button" class="lien" id="arreter-place">Arrêter</button>
+      </div>
+    </div>
+    <nav class="fil" id="fil-place" aria-label="Dossier affiché" hidden></nav>
+    <div class="note" id="etat-place" role="status" hidden></div>
+    <ul class="carte liste" id="liste-place" aria-label="Contenu du dossier" hidden></ul>
   </main>
 </div>
 </body>

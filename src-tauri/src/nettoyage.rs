@@ -13,7 +13,7 @@ use crate::categories::{self, Mesure};
 
 /// Supprime un fichier ; s'il est en lecture seule (fréquent dans Temp), lève l'attribut et
 /// réessaie une fois.
-fn supprimer(f: &Path) -> bool {
+pub(crate) fn supprimer(f: &Path) -> bool {
     if fs::remove_file(f).is_ok() {
         return true;
     }
