@@ -1,0 +1,5 @@
+Sayonara voit maintenant ce que laissent les outils des développeurs.
+
+- Nouvelle ligne dans l'analyse : « Dossiers de développement ». Les dossiers target des projets Rust et node_modules des projets Node, souvent des dizaines de Go, que la prochaine compilation refait toute seule.
+- Vous choisissez lesquels partent : la liste s'ouvre sur place, et ceux qui ont servi dans la semaine ne sont jamais cochés d'office. Ils sont supprimés pour de bon (trop gros pour la Corbeille).
+- Rien n'est cherché dans Windows, Program Files ni AppData, aucun lien n'est suivi, et chaque projet est revérifié juste avant la suppression.
