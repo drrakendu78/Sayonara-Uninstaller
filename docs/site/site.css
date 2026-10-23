@@ -1,0 +1,183 @@
+/* SPDX-FileCopyrightText: © 2026 Djamel Lazreg (drrakendu78) <https://djamellazreg.fr>
+   SPDX-License-Identifier: LicenseRef-PolyForm-Strict-1.0.0
+
+   La page GitHub de Sayonara Uninstaller, dans le monde de sa vidéo de présentation (Stelliverse-video,
+   src/sayonara/FilmSayonara.tsx) : le gris clair de l'appli et deux lueurs bleues qui dérivent, Public Sans très grasse,
+   le nom qui se met au net syllabe par syllabe (« Sa », « yo », « na », « ra », une demi-noire à 120 BPM), la fenêtre
+   de l'appli, ses trois phrases (« 91 Go », « Désinstalle. », « Et ses restes. »), puis la fenêtre qui devient le logo. */
+:root {
+  --bleu: #0071E3;
+  --encre: #1D1D1F;
+  --texte-2: #515154;
+  --fond: #F5F5F7;
+  --filet: #EBEBF0;
+  --sur-fond: #E3F3E8;
+  --sur-texte: #1B6E37;
+  --verif-fond: #FFF1DC;
+  --verif-texte: #8A4B00;
+  --police: 'Public Sans', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', Consolas, ui-monospace, monospace;
+  --sortie: cubic-bezier(0.23, 1, 0.32, 1);
+  --deplace: cubic-bezier(0.77, 0, 0.175, 1);
+  --ombre-fenetre: 0 50px 120px -40px rgba(16, 24, 40, 0.32), 0 0 0 1px rgba(0, 0, 0, 0.07);
+  --ombre-carte: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--fond); color: var(--encre); font-family: var(--police); font-size: 17px; line-height: 1.5; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+img, video { display: block; max-width: 100%; }
+a { color: var(--bleu); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--bleu); outline-offset: 3px; border-radius: 6px; }
+.cache { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* (des lignes équilibrées : jamais un mot seul sur la dernière) */
+.ligne, .mention, .petit, .detail, .intro, .smartscreen, .cartes span, .bas p { text-wrap: balance; }
+
+/* Le fond : le gris clair de l'appli, deux lueurs bleues très douces qui dérivent, une clarté au milieu. */
+.fond { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.fond::before, .fond::after { content: ""; position: absolute; width: 110vmax; height: 110vmax; border-radius: 50%; }
+.fond::before { left: -38vmax; top: -44vmax; background: radial-gradient(closest-side, rgba(0, 113, 227, 0.10), rgba(0, 113, 227, 0)); animation: derive-a 46s ease-in-out infinite alternate; }
+.fond::after { right: -42vmax; bottom: -50vmax; background: radial-gradient(closest-side, rgba(0, 113, 227, 0.07), rgba(0, 113, 227, 0)); animation: derive-b 52s ease-in-out infinite alternate; }
+@keyframes derive-a { to { transform: translate(8vmax, 6vmax); } }
+@keyframes derive-b { to { transform: translate(-7vmax, -5vmax); } }
+
+/* Le haut : la barre de titre de la page, en verre clair. */
+.haut { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 56px; padding: 0 max(24px, calc((100vw - 1240px) / 2)); background: rgba(245, 245, 247, 0.72); -webkit-backdrop-filter: saturate(1.6) blur(20px); backdrop-filter: saturate(1.6) blur(20px); border-bottom: 1px solid rgba(0, 0, 0, 0); transition: border-color 200ms ease; }
+.haut.defile { border-bottom-color: rgba(0, 0, 0, 0.08); }
+.marque { display: flex; align-items: center; gap: 10px; color: var(--encre); font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+.marque:hover { text-decoration: none; }
+.marque svg { width: 26px; height: 26px; flex: none; }
+.haut nav { display: flex; align-items: center; gap: 28px; font-size: 15px; }
+.haut nav a:not(.petit-bouton) { color: var(--texte-2); }
+.haut nav a:not(.petit-bouton):hover { color: var(--encre); text-decoration: none; }
+.petit-bouton { height: 34px; padding: 0 16px; border-radius: 999px; background: var(--bleu); color: #ffffff; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; transition: transform 120ms var(--sortie), filter 160ms ease; }
+.petit-bouton:hover { text-decoration: none; filter: brightness(1.08); }
+.petit-bouton:active { transform: scale(0.96); }
+
+/* Le nom : chaque morceau se met au net à son tour (« net »), en deux tons. */
+.nom { margin: 0; font-weight: 800; letter-spacing: -0.035em; line-height: 1.02; }
+.nom .mot { white-space: nowrap; }
+.nom .net { display: inline-block; white-space: pre; }
+.nom .suite { color: var(--bleu); }
+.net { opacity: 0; filter: blur(18px); transform: translateY(0.14em); }
+.pret .heros .net, .fin.vu .net { animation: net 470ms var(--sortie) var(--d, 0ms) both; }
+@keyframes net { to { opacity: 1; filter: blur(0); transform: none; } }
+.monte { opacity: 0; transform: translateY(12px); }
+.pret .heros .monte, .fin.vu .monte { animation: monte 530ms var(--sortie) var(--d, 0ms) both; }
+@keyframes monte { to { opacity: 1; transform: none; } }
+
+/* L'ouverture : la petite ligne, le nom, ce qu'on y fait, puis la fenêtre de l'appli qui monte et se met au net. */
+.heros { padding: clamp(56px, 11vh, 120px) 24px 0; text-align: center; }
+.ligne { margin: 0 0 18px; font-weight: 500; font-size: clamp(19px, 2.1vw, 30px); letter-spacing: -0.01em; color: var(--texte-2); }
+.heros .nom { font-size: clamp(50px, 9.4vw, 120px); }
+.actions { margin-top: 40px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px 28px; }
+.bouton { height: 54px; padding: 0 30px; border-radius: 999px; background: var(--bleu); color: #ffffff; font-weight: 600; font-size: 18px; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 12px 30px -12px rgba(0, 113, 227, 0.6); transition: transform 120ms var(--sortie), filter 160ms ease; }
+.bouton svg { width: 20px; height: 20px; }
+.bouton:hover { text-decoration: none; filter: brightness(1.08); }
+.bouton:active { transform: scale(0.97); }
+.lien-fleche { font-weight: 600; font-size: 18px; display: inline-flex; align-items: center; gap: 6px; }
+.lien-fleche svg { width: 16px; height: 16px; transition: transform 160ms var(--sortie); }
+.lien-fleche:hover svg { transform: translateX(3px); }
+.mention { margin: 22px 0 0; font-weight: 500; font-size: 17px; color: var(--texte-2); }
+.version { margin: 6px 0 0; min-height: 1.4em; font-family: var(--mono); font-size: 14px; color: var(--texte-2); }
+
+/* La fenêtre de l'appli : blanche, ses coins de Windows 11, l'ombre de la vidéo. */
+.fenetre { margin: 0; border-radius: 14px; overflow: hidden; background: #ffffff; box-shadow: var(--ombre-fenetre); aspect-ratio: 2000 / 1360; }
+.fenetre img, .fenetre video { width: 100%; height: 100%; object-fit: cover; }
+.fenetre-heros { width: min(1100px, 100%); margin: clamp(48px, 7vh, 72px) auto 0; opacity: 0; transform: translateY(40px) scale(0.955); filter: blur(12px); }
+.pret .fenetre-heros { animation: entre 870ms var(--sortie) 1700ms both; }
+@keyframes entre { to { opacity: 1; transform: none; filter: blur(0); } }
+
+/* Ses trois phrases, dans le côté libre de la fenêtre (comme la vidéo quand la fenêtre se pousse de côté). */
+.phrase { max-width: 1240px; margin: 0 auto; padding: clamp(80px, 14vh, 150px) 24px 0; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: center; gap: clamp(32px, 6vw, 80px); }
+.phrase.gauche { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); }
+.phrase.gauche .texte { order: -1; }
+.grand { margin: 0; font-weight: 800; font-size: clamp(56px, 7.2vw, 92px); line-height: 1; letter-spacing: -0.04em; }
+.grand.compte { color: var(--bleu); font-size: clamp(84px, 12vw, 168px); font-variant-numeric: tabular-nums; }
+.petit { margin: 22px 0 0; font-weight: 500; font-size: clamp(20px, 2.2vw, 30px); line-height: 1.25; letter-spacing: -0.01em; color: var(--texte-2); }
+.detail { margin: 22px 0 0; max-width: 36ch; font-size: 17px; line-height: 1.6; color: var(--texte-2); }
+
+/* Ce qui apparaît en défilant : il se met au net, comme les phrases de la vidéo. */
+.revele { opacity: 0; transform: translateY(26px); filter: blur(16px); transition: opacity 530ms var(--sortie), transform 530ms var(--sortie), filter 530ms var(--sortie); }
+.revele.vu { opacity: 1; transform: none; filter: blur(0); }
+.revele.apres { transition-delay: 230ms; }
+.revele.encore-apres { transition-delay: 380ms; }
+
+/* Ce qu'elle nettoie : la liste de l'appli, ses badges « Sans risque » et « À vérifier ». */
+.bloc { max-width: 1040px; margin: 0 auto; padding: clamp(110px, 16vh, 170px) 24px 0; }
+.bloc h2 { margin: 0; font-weight: 800; font-size: clamp(38px, 4.8vw, 60px); line-height: 1.05; letter-spacing: -0.035em; text-align: center; }
+.bloc .intro { margin: 18px auto 0; max-width: 44ch; font-weight: 500; font-size: clamp(18px, 1.7vw, 22px); line-height: 1.4; color: var(--texte-2); text-align: center; }
+.liste { margin: 48px 0 0; padding: 6px 0; list-style: none; background: #ffffff; border-radius: 20px; box-shadow: var(--ombre-carte); }
+.liste li { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 4px 18px; padding: 18px 28px; border-bottom: 1px solid var(--filet); }
+.liste li:last-child { border-bottom: 0; }
+.liste svg { width: 26px; height: 26px; color: var(--encre); }
+.liste b { display: block; font-weight: 600; font-size: 18px; line-height: 1.3; }
+.liste span.quoi { display: block; font-size: 15px; line-height: 1.45; color: var(--texte-2); }
+.badge { padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 14px; white-space: nowrap; }
+.badge.sur { background: var(--sur-fond); color: var(--sur-texte); }
+.badge.verif { background: var(--verif-fond); color: var(--verif-texte); }
+
+/* Ses garde-fous : des cartes, une promesse chacune. */
+.cartes { margin: 48px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.cartes li { padding: 28px 26px; background: #ffffff; border-radius: 20px; box-shadow: var(--ombre-carte); }
+.cartes svg { width: 30px; height: 30px; color: var(--bleu); }
+.cartes b { display: block; margin-top: 16px; font-weight: 700; font-size: 19px; line-height: 1.3; letter-spacing: -0.01em; }
+.cartes span { display: block; margin-top: 8px; font-size: 15px; line-height: 1.55; color: var(--texte-2); }
+
+/* La mise à jour : sa pastille, dans une barre de titre. */
+.pastille-demo { margin: 44px auto 0; width: min(560px, 100%); height: 56px; padding: 0 16px; display: flex; align-items: center; gap: 12px; background: #ffffff; border-radius: 14px; box-shadow: var(--ombre-fenetre); font-weight: 600; font-size: 15px; }
+.pastille-demo svg { width: 26px; height: 26px; flex: none; }
+.pastille-demo .titre { flex: 1; text-align: left; }
+.pastille-demo .maj { height: 30px; padding: 0 14px; border-radius: 999px; background: var(--bleu); color: #ffffff; font-size: 13px; display: inline-flex; align-items: center; animation: palpite 2.4s ease-in-out infinite; }
+@keyframes palpite { 50% { box-shadow: 0 0 0 6px rgba(0, 113, 227, 0.16); } }
+
+/* La vidéo de présentation. */
+.film .fenetre { margin-top: 48px; aspect-ratio: 16 / 9; }
+
+/* La fin : la fenêtre devient le logo, puis le nom, la mention et l'adresse. */
+.fin { padding: clamp(120px, 18vh, 190px) 24px clamp(90px, 12vh, 130px); text-align: center; }
+.scene-logo { position: relative; height: 230px; }
+.scene-logo .fenetre { position: absolute; left: 50%; top: 50%; width: min(420px, 78vw); margin: 0; transform: translate(-50%, -50%); }
+.scene-logo .logo { position: absolute; left: 50%; top: 50%; width: 132px; height: 132px; margin: -66px 0 0 -66px; border-radius: 30px; background: var(--bleu); box-shadow: 0 24px 60px -18px rgba(0, 113, 227, 0.55); display: flex; align-items: center; justify-content: center; opacity: 0; transform: scale(0.8); }
+.scene-logo .logo svg { width: 66px; height: 66px; }
+.fin.vu .scene-logo .fenetre { animation: devient 900ms var(--deplace) both; }
+.fin.vu .scene-logo .logo { animation: logo 520ms var(--sortie) 600ms both; }
+@keyframes devient { 70% { opacity: 1; } to { opacity: 0; transform: translate(-50%, -50%) scale(0.31); border-radius: 30px; } }
+@keyframes logo { to { opacity: 1; transform: none; } }
+.fin .nom { margin-top: 26px; font-size: clamp(46px, 8vw, 104px); }
+.fin .mention { margin-top: 20px; font-size: clamp(17px, 1.7vw, 22px); }
+.fin .actions { margin-top: 34px; }
+.adresse { margin: 26px 0 0; font-family: var(--mono); font-weight: 500; font-size: clamp(15px, 1.6vw, 22px); letter-spacing: 0.01em; }
+.smartscreen { margin: 34px auto 0; max-width: 62ch; font-size: 14px; line-height: 1.6; color: var(--texte-2); }
+
+.bas { padding: 28px 24px 40px; border-top: 1px solid rgba(0, 0, 0, 0.08); text-align: center; font-size: 13px; line-height: 1.7; color: var(--texte-2); }
+.bas p { margin: 0; }
+
+/* Les écrans étroits : tout s'empile, le texte d'abord. */
+@media (max-width: 920px) {
+  .haut nav a.optionnel { display: none; }
+  .phrase, .phrase.gauche { grid-template-columns: minmax(0, 1fr); gap: 28px; text-align: center; }
+  .phrase .texte, .phrase.gauche .texte { order: -1; }
+  .detail { margin-left: auto; margin-right: auto; }
+  .cartes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  .haut nav { gap: 16px; }
+  .haut nav a:not(.petit-bouton) { display: none; }
+  .liste li { grid-template-columns: 34px minmax(0, 1fr); padding: 16px 18px; }
+  .liste .badge { grid-column: 2; justify-self: start; }
+  .cartes { grid-template-columns: minmax(0, 1fr); }
+  .scene-logo { height: 190px; }
+}
+
+/* Moins de mouvement : tout est là, sans flou ni déplacement. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .fond::before, .fond::after, .pastille-demo .maj { animation: none; }
+  .net, .monte, .fenetre-heros, .revele { opacity: 1; filter: none; transform: none; transition: none; }
+  .pret .heros .net, .fin.vu .net, .pret .heros .monte, .fin.vu .monte, .pret .fenetre-heros { animation: none; }
+  .scene-logo .fenetre { display: none; }
+  .scene-logo .logo, .fin.vu .scene-logo .logo { opacity: 1; transform: none; animation: none; }
+}
